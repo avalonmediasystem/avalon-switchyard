@@ -1,4 +1,6 @@
 language: ruby
+notifications:
+  irc: "chat.freenode.net#projectvov"
+script: bundle install && bundle exec rspec
 rvm:
   - 2.1.2
-  - 2.0.0
