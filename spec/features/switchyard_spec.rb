@@ -12,14 +12,20 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-source 'https://rubygems.org'
+require 'spec_helper'
 
-# :default group gems
-gem 'retries'
-gem 'sinatra'
+describe 'Switchyard API Functionality' do
+  describe 'Status and Configuration Refresh' do
+    it 'returns the status of the app' do
+      get '/status'
+      expect(last_response.ok?).to be_truthy
+      expect(last_response.body).to match('Functional')
+    end
 
-group :test do
-  gem 'capybara'
-  gem 'rspec'
-  gem 'coveralls', require: false
+    xit 'returns information about the app at /' do
+    end
+
+    xit 'prompts the conf files to be reloaded when /reload_configs is called' do
+    end
+  end
 end

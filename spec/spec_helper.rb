@@ -12,41 +12,24 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
+require 'rack/test'
+require 'rspec'
 require 'sinatra'
-require 'json'
-require 'logger'
+require File.expand_path '../../switchyard.rb', __FILE__
+require 'coveralls'
 
-# config_file 'config/switchyard.yml'
+Coveralls.wear!
+ENV['RACK_ENV'] = 'test'
 
-get '/' do
-  'Switchyard Route'
+$LOAD_PATH << '../lib'
+
+RSpec.configure do |conf|
+  conf.include Rack::Test::Methods
 end
 
-get '/status' do
-  'Functional'
+module RSpecMixin
+  include Rack::Test::Methods
+  def app() Sinatra::Application end
 end
 
-get '/reload_configs' do
-  'Reload the config files'
-end
-
-# TODO:  Implement retries
-
-post '/media_objects/create' do
-  # 'Create a media object'
-  # object = JSON.parse(request.body)
-end
-
-get '/media_objects/status/:pid' do
-  'Get a media object status'
-end
-
-# TODO: Make sure that Brian will want to create collections?
-post '/collections/create' do
-  'Create a collection'
-end
-
-# TODO: Make sure that Brian will want to get status on collections
-get '/collections/status/:pid' do
-  'Get a collection object status'
-end
+RSpec.configure { |c| c.include RSpecMixin }
