@@ -16,7 +16,9 @@ require 'rack/test'
 require 'rspec'
 require 'sinatra'
 require File.expand_path '../../switchyard.rb', __FILE__
+require 'coveralls'
 
+Coveralls.wear!
 ENV['RACK_ENV'] = 'test'
 
 $LOAD_PATH << '../lib'
