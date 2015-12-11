@@ -12,10 +12,11 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
+source 'https://rubygems.org'
+
 # :default group gems
 gem 'retries'
 gem 'sinatra'
-
 
 group :test do
   gem 'capybara'
