@@ -19,7 +19,7 @@ gem 'retries'
 gem 'sinatra'
 
 group :development do
-  require 'byebug'
+  gem 'byebug'
 end
 
 group :test do
