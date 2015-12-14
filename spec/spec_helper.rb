@@ -17,6 +17,10 @@ require 'rspec'
 require 'sinatra'
 require File.expand_path '../../switchyard.rb', __FILE__
 require 'coveralls'
+require 'pathname'
+
+# Switchyard Specific Requires
+require 'switchyard_configuration'
 
 Coveralls.wear!
 ENV['RACK_ENV'] = 'test'
