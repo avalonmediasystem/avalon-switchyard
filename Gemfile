@@ -18,6 +18,10 @@ source 'https://rubygems.org'
 gem 'retries'
 gem 'sinatra'
 
+group :development do
+  require 'byebug'
+end
+
 group :test do
   gem 'capybara'
   gem 'rspec'
