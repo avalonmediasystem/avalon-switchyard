@@ -12,14 +12,22 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
+$LOAD_PATH << File.expand_path('../', __FILE__)
+$LOAD_PATH << File.expand_path('../', __FILE__) + '/lib/'
+
 require 'sinatra'
 require 'json'
 require 'logger'
+require 'switchyard_configuration'
 
-# config_file 'config/switchyard.yml'
+configure do
+  puts $LOAD_PATH
+  set :switchyard_configs, nil
+  set :time, Time.now.utc.iso8601
+end
 
 get '/' do
-  'Switchyard Route'
+  'Switchyard'
 end
 
 get '/status' do
@@ -27,7 +35,7 @@ get '/status' do
 end
 
 get '/reload_configs' do
-  'Reload the config files'
+  'Reload Configs'
 end
 
 # TODO:  Implement retries
