@@ -14,6 +14,7 @@
 
 require 'yaml'
 require 'pathname'
+require 'byebug'
 
 # Class that manages all the configurations needed for Switchyard
 class SwitchyardConfiguration
@@ -24,6 +25,10 @@ class SwitchyardConfiguration
   # @return [Pathname] the relative path to the config directory
   def path_to_configs
     @path_to_configs = Pathname(File.expand_path('../../config/', __FILE__))
+  end
+
+  def test
+    puts settings.time
   end
 
   # Loads a YAML File
@@ -38,8 +43,8 @@ class SwitchyardConfiguration
     fail ArgumentError, 'Filename is too short' if filename.size < 5
     fail ArgumentError, 'Filename does not indicate a yml file' if filename[filename.size - 4..filename.size - 1].downcase != '.yml'
     file = File.open(Pathname(path_to_configs.to_s + "/#{filename}")) # will raise Errno::ENOENT if not found
-    YAML.load(file) # will raise Psych::SyntaxError if not a valid yaml file
+    yaml = YAML.load(file) # will raise Psych::SyntaxError if not a valid yaml file
+    yaml[:source_file] = filename
+    return yaml
   end
-
-
 end

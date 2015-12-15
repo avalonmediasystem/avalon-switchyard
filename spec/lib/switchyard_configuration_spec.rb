@@ -42,6 +42,12 @@ describe 'configuring switchyard' do
       expect { @configuration.load_yaml('.yml') }.to raise_error(ArgumentError)
     end
 
+    it 'addes the filename to the hash it loads' do
+      yaml = @configuration.load_yaml('switchyard.yml')
+      expect(yaml[:source_file].class).to eq(String)
+      expect(yaml[:source_file]).to match('switchyard.yml')
+    end
+
     it 'raises a Psych error when the yaml is not valid' do
       # temp_path = Pathname(__FILE__) + '../../../'
       # Dir.chdir(temp_path) do
