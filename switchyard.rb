@@ -19,11 +19,12 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'switchyard_configuration'
+require 'byebug'
 
 configure do
-  puts $LOAD_PATH
-  set :switchyard_configs, nil
-  set :time, Time.now.utc.iso8601
+  loader = SwitchyardConfiguration.new
+  set :switchyard_configs, loader.load_yaml('switchyard.yml')
+  set :app_start_time, Time.now.utc.iso8601
 end
 
 get '/' do
@@ -34,12 +35,7 @@ get '/status' do
   'Functional'
 end
 
-get '/reload_configs' do
-  'Reload Configs'
-end
-
 # TODO:  Implement retries
-
 post '/media_objects/create' do
   # 'Create a media object'
   # object = JSON.parse(request.body)

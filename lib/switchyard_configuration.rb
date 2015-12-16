@@ -27,10 +27,6 @@ class SwitchyardConfiguration
     @path_to_configs = Pathname(File.expand_path('../../config/', __FILE__))
   end
 
-  def test
-    puts settings.time
-  end
-
   # Loads a YAML File
   #
   # @param [String] filename the name of the config file to load
