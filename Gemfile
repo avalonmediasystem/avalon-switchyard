@@ -19,6 +19,7 @@ gem 'retries'
 gem 'sinatra'
 gem 'sinatra-activerecord'
 gem 'rake'
+gem 'coveralls', require: false
 # gem 'activerecord', '~> 4.2', '>= 4.2.5'
 # gem 'rake'
 
@@ -32,7 +33,6 @@ end
 group :test do
   gem 'capybara'
   gem 'rspec'
-  gem 'coveralls', require: false
 end
 
 group :development, :test do

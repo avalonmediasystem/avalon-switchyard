@@ -12,20 +12,18 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
+require 'coveralls'
+Coveralls.wear!
 require 'rack/test'
 require 'rspec'
 require 'sinatra'
 require File.expand_path '../../switchyard.rb', __FILE__
-require 'coveralls'
 require 'pathname'
 
 # Switchyard Specific Requires
 require 'switchyard_configuration'
 
-Coveralls.wear!
 ENV['RACK_ENV'] = 'test'
-
-$LOAD_PATH << '../lib'
 
 RSpec.configure do |conf|
   conf.include Rack::Test::Methods
