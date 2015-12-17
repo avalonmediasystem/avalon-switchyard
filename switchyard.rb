@@ -19,7 +19,6 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'switchyard_configuration'
-require 'byebug'
 
 configure do
   loader = SwitchyardConfiguration.new
