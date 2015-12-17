@@ -19,19 +19,34 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'switchyard_configuration'
+require 'sinatra/activerecord'
+require 'byebug'
 
+# All items set are accessible as settings.key
+# @example
+#   settings.app_start_time #=> "2015-12-17T19:02:05Z"
 configure do
-  loader = SwitchyardConfiguration.new
-  set :switchyard_configs, loader.load_yaml('switchyard.yml')
   set :app_start_time, Time.now.utc.iso8601
+  loader = SwitchyardConfiguration.new
+
+  # db_settings = loader.load_yaml('database.yml')[Sinatra::Application.environment.to_s]
+  # set :database, ActiveRecord::Base.establish_connection(
+  #   adapter: db_settings['adapter'],
+  #   # :host     => db.host,
+  #   # :username => db.user,
+  #   # :password => db.password,
+  #   database: db_settings['database'],
+  #   encoding: db_settings['encoding'],
+  #   pool: db_settings['pool'],
+  #   timeout: db_settings['timeout']
+  # )
+  set :switchyard_configs, loader.load_yaml('switchyard.yml')
+  byebug
+  # Sinatra::Application.environment
 end
 
 get '/' do
   'Switchyard'
-end
-
-get '/status' do
-  'Functional'
 end
 
 # TODO:  Implement retries
