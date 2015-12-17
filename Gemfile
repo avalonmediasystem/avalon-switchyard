@@ -17,6 +17,10 @@ source 'https://rubygems.org'
 # :default group gems
 gem 'retries'
 gem 'sinatra'
+gem 'sinatra-activerecord'
+gem 'rake'
+# gem 'activerecord', '~> 4.2', '>= 4.2.5'
+# gem 'rake'
 
 group :development do
   gem 'byebug'
@@ -29,4 +33,8 @@ group :test do
   gem 'capybara'
   gem 'rspec'
   gem 'coveralls', require: false
+end
+
+group :development, :test do
+  gem 'sqlite3'
 end
