@@ -18,6 +18,13 @@ source 'https://rubygems.org'
 gem 'retries'
 gem 'sinatra'
 
+group :development do
+  gem 'byebug'
+  gem 'capistrano', '>3.1.2'
+  gem 'capistrano-bundler'
+  gem 'highline'
+end
+
 group :test do
   gem 'capybara'
   gem 'rspec'

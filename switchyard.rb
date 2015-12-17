@@ -12,26 +12,29 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
+$LOAD_PATH << File.expand_path('../', __FILE__)
+$LOAD_PATH << File.expand_path('../', __FILE__) + '/lib/'
+
 require 'sinatra'
 require 'json'
 require 'logger'
+require 'switchyard_configuration'
 
-# config_file 'config/switchyard.yml'
+configure do
+  loader = SwitchyardConfiguration.new
+  set :switchyard_configs, loader.load_yaml('switchyard.yml')
+  set :app_start_time, Time.now.utc.iso8601
+end
 
 get '/' do
-  'Switchyard Route'
+  'Switchyard'
 end
 
 get '/status' do
   'Functional'
 end
 
-get '/reload_configs' do
-  'Reload the config files'
-end
-
 # TODO:  Implement retries
-
 post '/media_objects/create' do
   # 'Create a media object'
   # object = JSON.parse(request.body)
