@@ -13,19 +13,14 @@
 # ---  END LICENSE_HEADER BLOCK  ---
 
 require 'spec_helper'
+require 'json'
 
 describe 'Switchyard API Functionality' do
   describe 'Status and Configuration Refresh' do
-    it 'returns the status of the app' do
-      get '/status'
+    it 'returns information about the app at /' do
+      get '/'
       expect(last_response.ok?).to be_truthy
-      expect(last_response.body).to match('Functional')
-    end
-
-    xit 'returns information about the app at /' do
-    end
-
-    xit 'prompts the conf files to be reloaded when /reload_configs is called' do
+      expect(JSON.parse(last_response.body).class).to eq(Hash)
     end
   end
 end
