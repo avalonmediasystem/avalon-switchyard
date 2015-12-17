@@ -14,7 +14,6 @@
 
 require 'yaml'
 require 'pathname'
-require 'byebug'
 
 # Class that manages all the configurations needed for Switchyard
 class SwitchyardConfiguration
