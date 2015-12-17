@@ -1,2 +1,2 @@
 config/database.yml
-db/*
+db/*.sqlite3
