@@ -2,7 +2,7 @@
 lock '3.4.0'
 
 set :user, ask('Username', 'enter the username for the server')
-set :deploy_host, ask('Server', 'enter in the server you are deploying to.')
+set :deploy_host, ask('Server', 'enter in the server you are deploying to')
 set :application, ask('Appname', 'enter the name of the app')
 set :repo_url, 'git@github.com:avalonmediasystem/avalon-switchyard.git'
 
@@ -37,25 +37,30 @@ set :scm, :git
 # set :keep_releases, 5
 
 namespace :deploy do
+  desc 'Make public dir for passenger'
+  task :passenger_dir do
+    on roles(:app) do
+      execute :mkdir, release_path.join('public')
+    end
+  end
+
   desc 'Restart application'
-   task :restart do
-     on roles(:app), in: :sequence, wait: 5 do
-       execute :mkdir, release_path.join('public')
-       # Your restart mechanism here, for example:
-       execute :mkdir, release_path.join('tmp')
-       execute :touch, release_path.join('tmp/restart.txt')
-     end
-   end
+  task :restart do
+    on roles(:app), in: :sequence, wait: 5 do
+      execute :mkdir, release_path.join('tmp')
+      execute :touch, release_path.join('tmp/restart.txt')
+    end
+  end
 
-   after :publishing, :restart
+  before :publishing, :passenger_dir
+  after :publishing, :restart
 
-   after :restart, :clear_cache do
-     on roles(:web), in: :groups, limit: 3, wait: 10 do
+  after :restart, :clear_cache do
+    on roles(:web), in: :groups, limit: 3, wait: 10 do
        # Here we can do anything such as:
        # within release_path do
        #   execute :rake, 'cache:clear'
        # end
-     end
-   end
-
+    end
+  end
 end
