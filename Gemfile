@@ -17,13 +17,12 @@ source 'https://rubygems.org'
 # :default group gems
 gem 'retries'
 gem 'sinatra'
-gem 'capistrano', '>3.1.2'
-gem 'capistrano-bundler'
-
-#etc/httpd/conf.d/
 
 group :development do
   gem 'byebug'
+  gem 'capistrano', '>3.1.2'
+  gem 'capistrano-bundler'
+  gem 'highline'
 end
 
 group :test do
