@@ -31,9 +31,14 @@ configure do
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
 end
 
+# Displays status information about the app
+#
+# @return [JSON] A JSON has of the status params
 get '/' do
-  info = { app_start_time: settings.app_start_time, rack_env: Sinatra::Application.environment }
-  "#{info}"
+  content_type :json
+  { app_start_time: settings.app_start_time,
+    rack_env: Sinatra::Application.environment
+  }.to_json
 end
 
 # TODO:  Implement retries
