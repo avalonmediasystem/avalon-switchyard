@@ -21,3 +21,22 @@ namespace :setup do
     end
   end
 end
+
+# Rake tasks for generating and decomissioning tokens
+namespace :tokens do
+  require './switchyard.rb'
+
+  # This task generates and displays a new token and prints the result to console
+  # @param [String] :notes (default: 'none') Any notes to add to the token
+  # @param [Boolean] :active (default: true) If set to true the API key is usable, false it is not
+  # @raise [ArgumentError] For a variety of cases when :notes or :active is invalid, exception will contain details
+  task :create_token, [:notes,:active] do |t,args|
+    token = ApiToken.new.create_token(active: args[:active] || true, notes: args[:notes] || 'none')
+    puts token.inspect
+  end
+
+  task :decomission_token, [:token_key] do |t,args|
+    token = ApiToken.new.decomission_token(args[:token_key])
+    puts token.inspect
+  end
+end
