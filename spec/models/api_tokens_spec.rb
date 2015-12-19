@@ -111,7 +111,22 @@ describe 'api token generation and management' do
       allow(@api_token).to receive(:token_looks_safe?).and_return(false)
       expect { @api_token.decomission_token('foo') }.to raise_error(ArgumentError)
     end
-
-
+  end
+  describe 'token validation' do
+    it 'validates a token that exists' do
+      test_token = @api_token.create_token[:token]
+      expect(@api_token.valid_token?(test_token)).to be_truthy
+    end
+    it 'rejects a token that does not exist' do
+      expect(@api_token.valid_token?('vader')).to be_falsey
+    end
+    it 'rejects a token that does not look SQL sanitized' do
+      expect(@api_token.valid_token?('select')).to be_falsey
+    end
+    it 'rejects a token that exists but is inactive' do
+      test_token = @api_token.create_token[:token]
+      @api_token.decomission_token(test_token)
+      expect(@api_token.valid_token?(test_token)).to be_falsey
+    end
   end
 end

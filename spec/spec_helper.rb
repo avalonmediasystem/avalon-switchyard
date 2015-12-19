@@ -24,6 +24,7 @@ require 'sinatra/activerecord'
 # Switchyard Specific Requires
 require 'switchyard_configuration'
 require 'api_token'
+#require 'media_objects'
 
 ENV['RACK_ENV'] = 'test'
 

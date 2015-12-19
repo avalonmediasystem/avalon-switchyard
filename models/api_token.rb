@@ -16,7 +16,6 @@ require 'sinatra/activerecord'
 
 # A fairly basic class for generating and decomissioning API tokens that grant access to Avalon Switchyard
 class ApiToken < ActiveRecord::Base
-
   # Creates an unique token and adds it to the database
   #
   # @param [String] notes (default: 'none') Information on the purpose of the token
@@ -64,6 +63,13 @@ class ApiToken < ActiveRecord::Base
   # @return [Boolean] True or False
   def valid_new_token?(token)
     unique_token?(token) && token_looks_safe?(token)
+  end
+
+  # Checks to see if the supplied token is a current active token
+  def valid_token?(token)
+    return false unless token_looks_safe?(token)
+    result = ApiToken.find_by(token: token)
+    !result.nil? && result[:active]
   end
 
   # Checks to see if the token lacks certain sql keywords
