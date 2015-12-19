@@ -16,7 +16,7 @@ namespace :setup do
     extension_to_remove = '.example.yml'
     extension_to_add = '.yml'
     Dir["#{directory}*#{extension_to_remove}"].each do |filename|
-      new_filename = filename[0..filename.length - extension_to_remove.length] + extension_to_add
+      new_filename = filename[0..filename.length - extension_to_remove.length - 1] + extension_to_add
       FileUtils.cp(filename, new_filename) unless File.exist?(new_filename)
     end
   end
