@@ -12,7 +12,6 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-require 'byebug'
 require 'sinatra/activerecord'
 
 # A fairly basic class for generating and decomissioning API tokens that grant access to Avalon Switchyard
