@@ -14,8 +14,8 @@ Avalon Switchyard is a Sinatra Ruby application written to route content between
 ## Installing Avalon Switchyard for Development
 
 1.  Clone this git repo and navigate to its root
-1.  `rake setup:configs`
 1.  `bundle install`
+1.  `rake setup:configs`
 1.  `rake db:migrate`
 1.  `ruby switchyard.rb`
 1.  Open a browser and navigate to `http://localhost:4567/`

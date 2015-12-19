@@ -1,7 +1,7 @@
 # config valid only for current version of Capistrano
 lock '3.4.0'
 
-set :linked_dirs, %w('config/*')
+
 set :user, ask('Username', 'enter the username for the server')
 set :deploy_host, ask('Server', 'enter in the server you are deploying to')
 set :application, ask('Appname', 'enter the name of the app')
@@ -26,7 +26,7 @@ set :scm, :git
 # set :pty, true
 
 # Default value for :linked_files is []
-# set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/secrets.yml')
+set :linked_files, fetch(:linked_files, []).push('config/database.yml')
 
 # Default value for linked_dirs is []
 # set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'vendor/bundle', 'public/system')
@@ -54,6 +54,7 @@ namespace :deploy do
   end
 
   before :publishing, :passenger_dir
+  #before :publishing, :migrate
   after :publishing, :restart
 
   after :restart, :clear_cache do
