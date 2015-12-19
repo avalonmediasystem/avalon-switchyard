@@ -37,6 +37,7 @@ class ApiToken < ActiveRecord::Base
   # This does not delete the token, just marks it inactive in the database
   #
   # @raise [ArgumentError] Raised if the token was not found in the database
+  # @raise [ArgumentError] Raised if the token looks unsafe (potential SQL inject)
   # @return [ApiToken] The token as it now appears in the database
   def decomission_token(token)
     fail ArgumentError, "#{token} looks unsafe" unless token_looks_safe?(token)
