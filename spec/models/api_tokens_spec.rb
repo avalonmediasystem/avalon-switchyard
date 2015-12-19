@@ -88,6 +88,11 @@ describe 'api token generation and management' do
         expect(@api_token.token_looks_safe?(test_token)).to be_falsey
       end
     end
+
+    it 'makes sure the took looks safe when checking uniqueness' do
+      expect(@api_token).to receive(:token_looks_safe?).at_least(:once).and_return(true)
+      @api_token.unique_token?(Time.now.utc.iso8601.to_s)
+    end
   end
 
   describe 'decomissioning a token' do

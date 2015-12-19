@@ -49,8 +49,10 @@ class ApiToken < ActiveRecord::Base
   # Checks to see if the token generated is unique
   #
   # @param [String] token The token to check uniqueness of
+  # @raise [ArgumentError] Raised if the token looks unsafe
   # @return [Boolean] true or false
   def unique_token?(token)
+    fail ArgumentError, 'The token looks unsafe' unless token_looks_safe?(token)
     result = ApiToken.find_by token: token
     result.nil?
   end
