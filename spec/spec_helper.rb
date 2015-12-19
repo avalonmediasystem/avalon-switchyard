@@ -19,9 +19,11 @@ require 'rspec'
 require 'sinatra'
 require File.expand_path '../../switchyard.rb', __FILE__
 require 'pathname'
+require 'sinatra/activerecord'
 
 # Switchyard Specific Requires
 require 'switchyard_configuration'
+require 'api_tokens'
 
 ENV['RACK_ENV'] = 'test'
 

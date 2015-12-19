@@ -14,21 +14,30 @@
 
 $LOAD_PATH << File.expand_path('../', __FILE__)
 $LOAD_PATH << File.expand_path('../', __FILE__) + '/lib/'
+$LOAD_PATH << File.expand_path('../', __FILE__) + '/models/'
 
 require 'sinatra'
 require 'json'
 require 'logger'
 require 'switchyard_configuration'
+require 'api_tokens'
 require 'sinatra/activerecord'
 require 'byebug' if settings.development?
 
-# All items set are accessible as settings.key
-# @example
-#   settings.app_start_time #=> "2015-12-17T19:02:05Z"
+# automatically load config/database.yml and assing it to settings.datase:
+register Sinatra::ActiveRecordExtension
+
 configure do
+  # Anything set here is available at this level with settings.foo
+  # @example
+  #   settings.app_start_time #=> "2015-12-17T19:02:05Z"
+  # In libraries these settings can be accessed as Sinatra::Application.settings.foo
+  # @example
+  #   Sinatra::Application.settings.app_start_time #=> "2015-12-17T19:02:05Z"
   set :app_start_time, Time.now.utc.iso8601
   loader = SwitchyardConfiguration.new
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
+  # ApiTokens.new.create_token('foo')
 end
 
 # Displays status information about the app
