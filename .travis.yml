@@ -1,6 +1,11 @@
 language: ruby
 notifications:
   irc: "chat.freenode.net#projectvov"
-script: bundle install && bundle exec rspec
+before_script:
+  - bundle install
+  - rake setup:configs
+  - rake db:create
+  - rake db:migrate
+script: bundle exec rspec
 rvm:
   - 2.1.2
