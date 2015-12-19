@@ -4,7 +4,6 @@ notifications:
 before_script:
   - bundle install
   - bundle exec rake setup:configs
-  - bundle exec rake db:create
   - bundle exec rake db:migrate
 script: bundle exec rspec
 rvm:
