@@ -17,6 +17,7 @@ require 'sinatra/activerecord'
 
 # A fairly basic class for generating and decomissioning API tokens that grant access to Avalon Switchyard
 class ApiToken < ActiveRecord::Base
+
   # Creates an unique token and adds it to the database
   #
   # @param [String] notes (default: 'none') Information on the purpose of the token
@@ -28,11 +29,7 @@ class ApiToken < ActiveRecord::Base
     notes = ActiveRecord::Base.sanitize(notes)
     fail ArgumentError, "active is a #{active.class} not a Boolean" if active != !!active
 
-    token = nil
-    loop do
-      token = generate_token
-      break if unique_token?(token)
-    end
+    token = generate_token
     ApiToken.create(token: token, creation_time: Time.now.utc.iso8601, active: active, notes: notes)
   end
 
@@ -42,6 +39,7 @@ class ApiToken < ActiveRecord::Base
   # @raise [ArgumentError] Raised if the token was not found in the database
   # @return [ApiToken] The token as it now appears in the database
   def decomission_token(token)
+    fail ArgumentError, "#{token} looks unsafe" unless token_looks_safe?(token)
     row = ApiToken.find_by token: token
     fail ArgumentError, "#{token} not found" if row.nil?
     row.update(active: false)
@@ -57,11 +55,36 @@ class ApiToken < ActiveRecord::Base
     result.nil?
   end
 
-  # Generates a random api token
+  # Checks to see if the token is a valid new token
+  # tests for uniqueness and lack of certain sql keywords
+  #
+  # @param [String] token the token
+  # @return [Boolean] True or False
+  def valid_new_token?(token)
+    unique_token?(token) && token_looks_safe?(token)
+  end
+
+  # Checks to see if the token lacks certain sql keywords
+  #
+  # @param [String] token the token
+  # @param [Boolean] True or False
+  def token_looks_safe?(token)
+    unsafe_words = %w('select', 'delete', 'drop', 'insert', 'into', 'from', 'update')
+    downcase_token = token.downcase
+    unsafe_words.each do |word|
+      return false if downcase_token.include?(word)
+    end
+    true
+  end
+
+  # Generates a random api token, checks for uniqueness and certain sql keywords
   # @param [length] Int (Default: 36) The length of the token
   # @return [String] The token
   def generate_token(n: 36)
-    SecureRandom.urlsafe_base64(n)
+    token = nil
+    loop do
+      token = SecureRandom.urlsafe_base64(n)
+      return token if valid_new_token?(token)
+    end
   end
-
 end

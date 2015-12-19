@@ -40,7 +40,7 @@ describe 'api token generation and management' do
 
     it 'regenerates the token if the one generated is not unique' do
       allow(@api_token).to receive(:unique_token?).and_return(false, false, true)
-      expect(@api_token).to receive(:generate_token).exactly(3).times
+      expect(SecureRandom).to receive(:urlsafe_base64).exactly(3).times.and_return(Time.now.to_s)
       @api_token.create_token
     end
 
@@ -72,6 +72,22 @@ describe 'api token generation and management' do
     it 'raises an ArgumentError if active is not a boolean' do
       expect { @api_token.create_token(active: 'sql_inject') }.to raise_error(ArgumentError)
     end
+
+    it 'checks uniqueness and safety when creating a token' do
+      expect(@api_token).to receive(:unique_token?).at_least(:once).and_return(true)
+      expect(@api_token).to receive(:token_looks_safe?).at_least(:once).and_return(true)
+      @api_token.create_token
+    end
+  end
+
+  describe 'token safety' do
+    it 'marks a token unsafer when certain sql words are present' do
+      unsafe_words = %w('select', 'Delete', 'drOP', 'INSERT', 'into', 'from', 'update')
+      unsafe_words.each do |word|
+        test_token = SecureRandom.urlsafe_base64(36) + word
+        expect(@api_token.token_looks_safe?(test_token)).to be_falsey
+      end
+    end
   end
 
   describe 'decomissioning a token' do
@@ -85,5 +101,12 @@ describe 'api token generation and management' do
     it 'raises an ArgumentError if the token does not exist' do
       expect { @api_token.decomission_token(Time.now.utc.iso8601.to_s) }.to raise_error(ArgumentError)
     end
+
+    it 'raises an Argument Error if the token looks unsafe' do
+      allow(@api_token).to receive(:token_looks_safe?).and_return(false)
+      expect { @api_token.decomission_token('foo') }.to raise_error(ArgumentError)
+    end
+
+
   end
 end
