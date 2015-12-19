@@ -3,9 +3,9 @@ notifications:
   irc: "chat.freenode.net#projectvov"
 before_script:
   - bundle install
-  - rake setup:configs
-  - rake db:create
-  - rake db:migrate
+  - bundle exec rake setup:configs
+  - bundle exec rake db:create
+  - bundle exec rake db:migrate
 script: bundle exec rspec
 rvm:
   - 2.1.2
