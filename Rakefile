@@ -29,12 +29,14 @@ namespace :tokens do
   # @param [String] :notes (default: 'none') Any notes to add to the token
   # @param [Boolean] :active (default: true) If set to true the API key is usable, false it is not
   # @raise [ArgumentError] For a variety of cases when :notes or :active is invalid, exception will contain details
-  task :create_token, [:notes,:active] do |t,args|
+  task :create_token, [:notes,:active, :env] do |t,args|
+    ENV['RACK_ENV'] = args[:env]
     token = ApiToken.new.create_token(active: args[:active] || true, notes: args[:notes] || 'none')
     puts token.inspect
   end
 
-  task :decomission_token, [:token_key] do |t,args|
+  task :decomission_token, [:token_key, :env] do |t,args|
+    ENV['RACK_ENV'] = args[:env]
     token = ApiToken.new.decomission_token(args[:token_key])
     puts token.inspect
   end
