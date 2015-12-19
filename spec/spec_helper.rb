@@ -23,7 +23,7 @@ require 'sinatra/activerecord'
 
 # Switchyard Specific Requires
 require 'switchyard_configuration'
-require 'api_tokens'
+require 'api_token'
 
 ENV['RACK_ENV'] = 'test'
 

@@ -20,7 +20,7 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'switchyard_configuration'
-require 'api_tokens'
+require 'api_token'
 require 'sinatra/activerecord'
 require 'byebug' if settings.development?
 

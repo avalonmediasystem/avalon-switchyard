@@ -16,7 +16,7 @@ require 'spec_helper'
 
 describe 'api token generation and management' do
   before :all do
-    @api_token = ApiTokens.new
+    @api_token = ApiToken.new
   end
 
   describe 'generating token' do
@@ -35,7 +35,7 @@ describe 'api token generation and management' do
 
   describe 'creating tokens and checking uniqueness' do
     it 'creates a token' do
-      expect(@api_token.create_token.class).to eq(ApiTokens)
+      expect(@api_token.create_token.class).to eq(ApiToken)
     end
 
     it 'regenerates the token if the one generated is not unique' do
@@ -67,6 +67,10 @@ describe 'api token generation and management' do
     it 'allows an inactive token to be created' do
       token = @api_token.create_token(active: false)
       expect(token[:active]).to be_falsey
+    end
+
+    it 'raises an ArgumentError if active is not a boolean' do
+      expect { @api_token.create_token(active: 'sql_inject') }.to raise_error(ArgumentError)
     end
   end
 end
