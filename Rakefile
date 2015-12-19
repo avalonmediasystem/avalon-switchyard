@@ -1,6 +1,5 @@
 # Rakefile
 require 'sinatra/activerecord/rake'
-require 'byebug'
 
 namespace :db do
   task :load_config do
