@@ -73,4 +73,17 @@ describe 'api token generation and management' do
       expect { @api_token.create_token(active: 'sql_inject') }.to raise_error(ArgumentError)
     end
   end
+
+  describe 'decomissioning a token' do
+    it 'decomissions a token' do
+      token = @api_token.create_token
+      expect(token[:active]).to be_truthy
+      result = @api_token.decomission_token(token[:token])
+      expect(result[:active]).to be_falsey
+    end
+
+    it 'raises an ArgumentError if the token does not exist' do
+      expect { @api_token.decomission_token(Time.now.utc.iso8601.to_s) }.to raise_error(ArgumentError)
+    end
+  end
 end

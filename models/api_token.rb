@@ -22,7 +22,7 @@ class ApiToken < ActiveRecord::Base
   # @param [String] notes (default: 'none') Information on the purpose of the token
   # @param [Boolean] active (default: true)  Whether or not the token can be used for API access
   # @raise [ArgumentError] Raised if active is not a Boolean
-  # @return [String] The token created
+  # @return [ApiToken] The token created, items can be accessed as symbols. :notes, :active, etc
   def create_token(notes: 'none', active: true)
     # Prevent SQL Injection
     notes = ActiveRecord::Base.sanitize(notes)
@@ -40,7 +40,12 @@ class ApiToken < ActiveRecord::Base
   # This does not delete the token, just marks it inactive in the database
   #
   # @raise [ArgumentError] Raised if the token was not found in the database
+  # @return [ApiToken] The token as it now appears in the database
   def decomission_token(token)
+    row = ApiToken.find_by token: token
+    fail ArgumentError, "#{token} not found" if row.nil?
+    row.update(active: false)
+    row
   end
 
   # Checks to see if the token generated is unique
