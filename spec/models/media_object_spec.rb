@@ -42,5 +42,54 @@ describe 'creation of media objects' do
       expect(@media_object.parse_request_body(load_sample_obj)[:barcodes]).not_to be_empty
       expect(@media_object.parse_request_body(load_sample_obj)[:json].keys).not_to be_empty
     end
+
+    describe 'checking request validity' do
+      before :all do
+        # For these tests don't use a random fixture, since we want to break a known good one
+        # Makes debugging easier if we ever accidentally load a bad fixture
+        @fixture = 'GR00034889.txt'
+      end
+      it 'marks the status as valid when the request is valid' do
+        expect(@media_object.parse_request_body(load_sample_obj(filename: @fixture))[:status]).to be_truthy
+      end
+
+      it 'marks the status as invalid when the request is not valid' do
+        expect(@media_object.parse_request_body('foo')[:status][:valid]).to be_falsey
+        expect(@media_object.parse_request_body('foo')[:status][:errors].class).to eq(String)
+        expect(@media_object.parse_request_body('foo')[:status][:errors].size).not_to eq(0)
+      end
+
+      describe 'checking for omission of a specific piece of the request' do
+        before :each do
+          @valid_request = @media_object.parse_request_body(load_sample_obj(filename: @fixture))
+        end
+
+        it 'marks the status as invalid when there are no barcodes' do
+          @valid_request[:barcodes] = []
+          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+        end
+
+        it 'marks the status as invalid when there is no json' do
+          @valid_request[:json] = {}
+          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+        end
+
+        it 'marks the status as invalid when the group name is nil' do
+          @valid_request[:json]['group_name'] = nil
+          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+        end
+
+        it 'marks the status as invalid when the group name is an empty string' do
+          @valid_request[:json]['group_name'] = ''
+          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+        end
+      end
+
+
+
+    end
+
+
+
   end
 end

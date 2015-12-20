@@ -65,6 +65,10 @@ end
 # TODO:  Implement retries
 post '/media_objects/create' do
   protected!
+  media_object = MediaObject.new
+  object = media_object.parse_request_body(request.body.read)
+  halt 400, object[:status][:errors] unless object[:status][:valid] # halt if the provided data is incorrect
+  #media_object.check_object(object)
   # object = JSON.parse(request.body)
 end
 
@@ -80,8 +84,4 @@ end
 # TODO: Make sure that Brian will want to get status on collections
 get '/collections/status/:pid' do
   'Get a collection object status'
-end
-
-def valid_api_token?
-  return ApiToken.new
 end

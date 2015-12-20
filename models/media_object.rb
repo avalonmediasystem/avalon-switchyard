@@ -23,13 +23,39 @@ class MediaObject #< ActiveRecord::Base
   # @return [Hash] return A parsed Hash of the request
   # @return return [Array <String>] :barcodes an array listing all MDPI barcodes sent in the reuqest
   # @return return [Hash] :json The JSON repsentation of the object
+  # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
+  # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
+  # @return :status [String] :errors Any errors encountered, nil if valid is true
   def parse_request_body(body)
     return_hash = {}
     splitter = '----------'
     return_hash[:barcodes] = parse_barcodes(body.split(splitter)[0])
     return_hash[:json] = parse_json(body.split(splitter)[1])
+    check_request(return_hash)
+  end
 
-    return_hash
+  def check_request(hashed_request)
+    failure_reasons = ''
+
+    # Make sure we have barcodes
+    if hashed_request[:barcodes].size == 0
+      failure_reasons << 'No barcodes found on parse.  '
+    end
+
+    # Make sure we have JSON
+    if hashed_request[:json].keys.size == 0
+      failure_reasons << 'JSON could not be parsed.  '
+    end
+
+    # Make sure we have a group_name to register, skip this if we've already found errors
+    if failure_reasons.size == 0 && (hashed_request[:json]['group_name'].nil? || hashed_request[:json]['group_name'].size == 0)
+      failure_reasons << 'No group_name attribute could be found in the JSON'
+    end
+
+    result = { valid: failure_reasons.size == 0 }
+    result[:errors] = failure_reasons.strip unless result[:valid]
+    hashed_request[:status] = result
+    hashed_request
   end
 
   # Takes the portion of the request body made up of barcodes and parses the JSON

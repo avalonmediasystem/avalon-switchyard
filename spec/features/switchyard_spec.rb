@@ -24,11 +24,28 @@ describe 'Switchyard API Functionality' do
     end
   end
   describe 'Creating Media Objects' do
+    before :all do
+      @valid_token = ApiToken.new.create_token[:token]
+    end
+
     describe 'authorization' do
       it 'requires authorization to create a media object' do
         post '/media_objects/create'
         expect(last_response.ok?).to be_falsey
         expect(last_response.status).to eq(401)
+      end
+
+      it 'successfull authorizes creation of a media object when the token is valid' do
+        post '/media_objects/create', 'foo', 'HTTP_API_TOKEN' => @valid_token
+        expect(last_response.status).not_to eq(401)
+      end
+
+      describe 'invalid data in post requests' do
+        it 'halt with error code 400 if the request body is not valid' do
+          post '/media_objects/create', 'foo', 'HTTP_API_TOKEN' => @valid_token
+          expect(last_response.status).to eq(400)
+        end
+
       end
     end
   end
