@@ -16,7 +16,7 @@ require 'sinatra/activerecord'
 require 'json'
 
 # Class for creating and working with media objects
-class MediaObject #< ActiveRecord::Base
+class MediaObject < ActiveRecord::Base
   # Takes the information posts to the API in the request body and parses it
   #
   # @param [String] body The body of the post request
