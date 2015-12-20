@@ -19,9 +19,13 @@ require 'rspec'
 require 'sinatra'
 require File.expand_path '../../switchyard.rb', __FILE__
 require 'pathname'
+require 'sinatra/activerecord'
+require 'restclient'
 
 # Switchyard Specific Requires
 require 'switchyard_configuration'
+require 'api_token'
+require 'media_object'
 
 ENV['RACK_ENV'] = 'test'
 
@@ -35,3 +39,18 @@ module RSpecMixin
 end
 
 RSpec.configure { |c| c.include RSpecMixin }
+
+# Loads a sample object fixture
+# Grabs a random one if the file is not specified
+def load_sample_obj(filename: nil)
+  # path to sample objects
+  p = './spec/fixtures/sample_objects/'
+  p << filename unless filename.nil?
+  file_list = Dir[p + '*.txt']
+  p = file_list[rand(0..file_list.size - 1)] if filename.nil?
+  File.read(p)
+end
+
+def post_media_create_request(api_token: '', body: '')
+  RestClient.post('http://localhost:4567', body, api_token: api_token)
+end

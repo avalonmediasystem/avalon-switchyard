@@ -49,6 +49,7 @@ GEM
     mime-types (2.99)
     mini_portile2 (2.0.0)
     minitest (5.8.3)
+    mysql2 (0.4.2)
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
     net-ssh (3.0.1)
@@ -119,12 +120,10 @@ DEPENDENCIES
   capybara
   coveralls
   highline
+  mysql2
   rake
   retries
   rspec
   sinatra
   sinatra-activerecord
   sqlite3
-
-BUNDLED WITH
-   1.10.6

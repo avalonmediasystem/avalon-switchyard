@@ -12,6 +12,7 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
+ruby '2.1.7'
 source 'https://rubygems.org'
 
 # :default group gems
@@ -20,8 +21,6 @@ gem 'sinatra'
 gem 'sinatra-activerecord'
 gem 'rake'
 gem 'coveralls', require: false
-# gem 'activerecord', '~> 4.2', '>= 4.2.5'
-# gem 'rake'
 
 group :development do
   gem 'byebug'
@@ -37,4 +36,8 @@ end
 
 group :development, :test do
   gem 'sqlite3'
+end
+
+group :production do
+  gem 'mysql2'
 end
