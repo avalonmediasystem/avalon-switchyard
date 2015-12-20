@@ -96,16 +96,11 @@ end
 get '/media_objects/status/:group_name' do
   content_type :json
   protected!
-  'Get a media object status'
-end
-
-public
-
-# Helper method to extend just the database connection error down to libs and models
-def database_timeout
-  database_connection_failure!
-end
-
-def record_not_found
-  record_not_found!
+  media_object = MediaObject.new
+  final_form = media_object.object_status_as_json(params[:group_name])
+  unless final_form[:success]
+    database_connection_failure! if final_form[:error] == 500
+    record_not_found! if final_form[:error] == 404
+  end
+  final_form.to_json
 end

@@ -84,4 +84,40 @@ describe 'Switchyard API Functionality' do
       end
     end
   end
+  describe 'queryinng for object status' do
+    before :all do
+      @valid_token = ApiToken.new.create_token[:token]
+      post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
+      @inserted_object = JSON.parse(last_response.body).symbolize_keys
+    end
+
+    it 'requires authorization to get get' do
+      get "/media_objects/status/#{@inserted_object[:group_name]}"
+      expect(last_response.ok?).to be_falsey
+      expect(last_response.status).to eq(401)
+    end
+
+    it 'displays the status of the object' do
+      get "/media_objects/status/#{@inserted_object[:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
+      response = JSON.parse(last_response.body).symbolize_keys
+      @inserted_object.keys.each do |key|
+        expect(response[key]).to match(@inserted_object[key])
+      end
+    end
+
+    it 'returns 404 if the object is not found' do
+      get '/media_objects/status/IndianaFootball', nil, 'HTTP_API_TOKEN' => @valid_token
+      expect(last_response.ok?).to be_falsey
+      expect(last_response.status).to eq(404)
+    end
+
+    it 'returns 500 if the database is unavailable' do
+      mo = MediaObject.new
+      allow(MediaObject).to receive(:new).and_return(mo)
+      allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 500)
+      get "/media_objects/status/#{@inserted_object[:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
+      expect(last_response.ok?).to be_falsey
+      expect(last_response.status).to eq(500)
+    end
+  end
 end
