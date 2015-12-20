@@ -40,12 +40,35 @@ describe 'Switchyard API Functionality' do
         expect(last_response.status).not_to eq(401)
       end
 
-      describe 'invalid data in post requests' do
+      describe 'failed post requests' do
         it 'halt with error code 400 if the request body is not valid' do
           post '/media_objects/create', 'foo', 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(400)
         end
 
+        it 'halts with error code 500 if the database cannot be accessed' do
+          mo = MediaObject.new
+          allow(MediaObject).to receive(:new).and_return(mo)
+          allow(mo).to receive(:register_object).and_return(false)
+          post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
+          expect(last_response.status).to eq(500)
+        end
+
+        it 'halts with error code 404 if the object is not found immediately after registration' do
+          mo = MediaObject.new
+          allow(MediaObject).to receive(:new).and_return(mo)
+          allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 404)
+          post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
+          expect(last_response.status).to eq(404)
+        end
+
+        it 'halts with error code 500 if the database times out while trying to get the object' do
+          mo = MediaObject.new
+          allow(MediaObject).to receive(:new).and_return(mo)
+          allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 500)
+          post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
+          expect(last_response.status).to eq(500)
+        end
       end
     end
   end

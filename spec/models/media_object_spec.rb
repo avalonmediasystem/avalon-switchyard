@@ -55,8 +55,8 @@ describe 'creation of media objects' do
 
       it 'marks the status as invalid when the request is not valid' do
         expect(@media_object.parse_request_body('foo')[:status][:valid]).to be_falsey
-        expect(@media_object.parse_request_body('foo')[:status][:errors].class).to eq(String)
-        expect(@media_object.parse_request_body('foo')[:status][:errors].size).not_to eq(0)
+        expect(@media_object.parse_request_body('foo')[:status][:error].class).to eq(String)
+        expect(@media_object.parse_request_body('foo')[:status][:error].size).not_to eq(0)
       end
 
       describe 'checking for omission of a specific piece of the request' do
@@ -101,7 +101,7 @@ describe 'creation of media objects' do
     it 'retries registering an object when there is an error' do
       allow(ActiveRecord::Base).to receive(:create).and_raise(ActiveRecord::ConnectionTimeoutError)
       expect(ActiveRecord::Base).to receive(:create).exactly(Sinatra::Application.settings.max_retries).times
-      expect(@media_object.register_object(@content)).to be_falsey
+      expect(@media_object.register_object(@content)[:success]).to be_falsey
     end
 
     it 'removes a previous entry when an object is retried' do
@@ -112,14 +112,42 @@ describe 'creation of media objects' do
     it 'retries destroying an object when there is an error' do
       allow(ActiveRecord::Base).to receive(:destroy_all).and_raise(ActiveRecord::ConnectionTimeoutError)
       expect(ActiveRecord::Base).to receive(:destroy_all).exactly(Sinatra::Application.settings.max_retries).times
-      expect(@media_object.destroy_object(@content[:json][:group_name])).to be_falsey
+      expect(@media_object.destroy_object(@content[:json][:group_name])[:success]).to be_falsey
     end
 
     it 'destroys an object' do
       @media_object.register_object(@content)
       expect(MediaObject.find_by(group_name: @content[:json][:group_name])).not_to be_nil
-      expect(@media_object.destroy_object(@content[:json][:group_name])).to be_truthy
+      expect(@media_object.destroy_object(@content[:json][:group_name])[:success]).to be_truthy
       expect(MediaObject.find_by(group_name: @content[:json][:group_name])).to be_nil
+    end
+  end
+  describe 'displaying an object' do
+    before :each do
+      @object = @media_object.register_object(@media_object.parse_request_body(load_sample_obj))
+    end
+
+    after :each do
+      @media_object.destroy_object(@object[:group_name])
+    end
+
+    it 'displays an object as json' do
+      expect(@media_object.object_status_as_json(@object[:group_name]).class).to eq(Hash)
+      expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to be_nil
+    end
+
+    it 'returns 404 when the object is not found' do
+      @media_object.destroy_object(@object[:group_name])
+      expect(@media_object.object_status_as_json(@object[:group_name]).class).to eq(Hash)
+      expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to eq(404)
+      expect(@media_object.object_status_as_json(@object[:group_name])[:success]).to be_falsey
+    end
+
+    it 'returns 500 when the databsase cannot be reached' do
+      allow(ActiveRecord::Base).to receive(:find_by).and_raise(ActiveRecord::ConnectionTimeoutError)
+      expect(@media_object.object_status_as_json(@object[:group_name]).class).to eq(Hash)
+      expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to eq(500)
+      expect(@media_object.object_status_as_json(@object[:group_name])[:success]).to be_falsey
     end
   end
 end

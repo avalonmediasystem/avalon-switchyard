@@ -61,7 +61,7 @@ class MediaObject < ActiveRecord::Base
     end
 
     result = { valid: failure_reasons.size == 0 }
-    result[:errors] = failure_reasons.strip unless result[:valid]
+    result[:error] = failure_reasons.strip unless result[:valid]
     hashed_request[:status] = result
     hashed_request
   end
@@ -88,28 +88,47 @@ class MediaObject < ActiveRecord::Base
   # Registers the object in my sql
   #
   # @param [Hash] object The object as parsed by parse_request_body
-  # @return [Boolean] true if the operation has succeed, false if it has not
+  # @return [Hash] results a hash containing the results of the reigstration
+  # @return results [Boolean] :success true if successfull, false if not
+  # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
   def register_object(obj)
     destroy_object(obj[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.create(group_name: obj[:json][:group_name], status: 'recieved', error: false, last_modified: t, created: t, locked: false)
-      return true
+      MediaObject.create(group_name: obj[:json][:group_name], status: 'received', error: false, last_modified: t, created: t, locked: false)
+      return { success: true, group_name: obj[:json][:group_name] }
     end
   rescue
-    return false
+    return { success: false }
   end
 
   # Deletes a media object from sql using the group name
   #
   # @param [String] group_name The group_name attribute of the object
-  # @return [Boolean] true if the object was deleted (or not was present to be deleted), false if there was an error deleting it
+  # @return [Hash] results a hash containing the results of the destruction
+  # @return results [Boolean] :success true if successfull, false if not
+  # @return results [String] :group_name the group_name of the object created, only return if deletion was successfull
   def destroy_object(group_name)
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       MediaObject.destroy_all(group_name: group_name)
-      return true
+      return { success: true, group_name: group_name }
     end
   rescue
-    return false
+    return { success: false }
+  end
+
+  # Look up the current status of an object and return it
+  #
+  # @param [String] group_name The group_name of the object
+  # @return [Hash] A hash of the obj's SQL row formatted for json or the error
+  def object_status_as_json(group_name)
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+      obj = MediaObject.find_by(group_name: group_name)
+      rv = { success: false, error: 404 }
+      rv = JSON.parse(obj.to_json) unless obj.nil?
+      return rv
+    end
+  rescue
+    return { success: false, error: 500 }
   end
 end

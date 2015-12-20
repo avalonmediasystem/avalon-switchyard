@@ -41,7 +41,6 @@ configure do
   set :max_sleep_seconds, 0.2 unless settings.production?
   loader = SwitchyardConfiguration.new
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
-  # ApiTokens.new.create_token('foo')
 end
 
 helpers do
@@ -52,6 +51,14 @@ helpers do
   def protected!
     return if ApiToken.new.valid_token?(env['HTTP_API_TOKEN'])
     halt 401, "Not authorized\n"
+  end
+
+  def database_connection_failure!
+    halt 500, error: true, error_message: 'Could not connect to database'
+  end
+
+  def record_not_found!
+    halt 404, error: true, error_message: 'Record not found'
   end
 end
 
@@ -67,18 +74,39 @@ end
 
 # TODO:  Implement retries
 post '/media_objects/create' do
+  content_type :json
   protected!
   media_object = MediaObject.new
 
   # Parse the request and throw a 400 code if bad data was posted in
   object = media_object.parse_request_body(request.body.read)
-  halt 400, object[:status][:errors] unless object[:status][:valid] # halt if the provided data is incorrect
+  halt 400, status: '400', error: true, error_message: object[:status][:error] unless object[:status][:valid] # halt if the provided data is incorrect
+  registeration_results = media_object.register_object(object)
+  database_connection_failure! unless registeration_results[:success]
 
-  # Enter the object into SQL as recieved
-
+  # Display the object as it is currently entered into the database
+  final_form = media_object.object_status_as_json(registeration_results[:group_name])
+  unless final_form[:success]
+    database_connection_failure! if final_form[:error] == 500
+    record_not_found! if final_form[:error] == 404
+  end
+  final_form
+  #byebug
 end
 
 get '/media_objects/status/:group_name' do
+  content_type :json
   protected!
   'Get a media object status'
+end
+
+public
+
+# Helper method to extend just the database connection error down to libs and models
+def database_timeout
+  database_connection_failure!
+end
+
+def record_not_found
+  record_not_found!
 end
