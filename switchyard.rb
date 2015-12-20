@@ -21,7 +21,7 @@ require 'json'
 require 'logger'
 require 'switchyard_configuration'
 require 'api_token'
-require 'media_objects'
+require 'media_object'
 require 'sinatra/activerecord'
 require 'byebug' if settings.development?
 

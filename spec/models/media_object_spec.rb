@@ -12,14 +12,24 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-class MediaObjects
+require 'spec_helper'
 
-
-  def create
+describe 'creation of media objects' do
+  before :all do
+    @media_object = MediaObject.new
   end
+  describe 'parsing post requests' do
+    it 'returns a list of mdpi barcodes' do
+      codes_str = "18\n17\n19\n29\n20\n06"
+      codes_arr = %w(18 17 19 29 20 06)
+      expect(@media_object.parse_barcodes(codes_str)).to match(codes_arr)
+    end
 
-  def validate_api_key
-    byebug
-    puts Sinatra::Application.env
+    it 'returns an empty list whenno mdpi barcodes are found' do
+      codes_str = nil
+      expect(@media_object.parse_barcodes(codes_str)).to match([])
+    end
+
+
   end
 end
