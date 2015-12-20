@@ -65,7 +65,6 @@ end
 # TODO:  Implement retries
 post '/media_objects/create' do
   protected!
-  byebug
   # object = JSON.parse(request.body)
 end
 

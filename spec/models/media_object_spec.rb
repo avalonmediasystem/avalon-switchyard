@@ -37,5 +37,10 @@ describe 'creation of media objects' do
     it 'returns an empty hash when the json cannot be parsed' do
       expect(@media_object.parse_json(nil)).to eq({})
     end
+
+    it 'can parse a full request body' do
+      expect(@media_object.parse_request_body(load_sample_obj)[:barcodes]).not_to be_empty
+      expect(@media_object.parse_request_body(load_sample_obj)[:json].keys).not_to be_empty
+    end
   end
 end
