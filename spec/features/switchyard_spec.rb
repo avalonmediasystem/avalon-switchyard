@@ -69,6 +69,18 @@ describe 'Switchyard API Functionality' do
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(500)
         end
+
+        it 'posts a valid request and displays the result as json' do
+          post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
+          expect(last_response.ok?).to be_truthy
+          expect(last_response.status).to eq(200)
+          result = JSON.parse(last_response.body).symbolize_keys
+          expect(result[:group_name]).not_to be_nil
+          expect(result[:status]).to eq('received')
+          expect(result[:locked]).to be_falsey
+          expect(result[:error]).to be_falsey
+          expect(result[:error_message]).to be_nil
+        end
       end
     end
   end

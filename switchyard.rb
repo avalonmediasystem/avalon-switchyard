@@ -54,11 +54,11 @@ helpers do
   end
 
   def database_connection_failure!
-    halt 500, error: true, error_message: 'Could not connect to database'
+    halt 500, { error: true, error_message: 'Could not connect to database' }.to_json
   end
 
   def record_not_found!
-    halt 404, error: true, error_message: 'Record not found'
+    halt 404, { error: true, error_message: 'Record not found' }.to_json
   end
 end
 
@@ -90,8 +90,7 @@ post '/media_objects/create' do
     database_connection_failure! if final_form[:error] == 500
     record_not_found! if final_form[:error] == 404
   end
-  final_form
-  #byebug
+  final_form.to_json
 end
 
 get '/media_objects/status/:group_name' do
