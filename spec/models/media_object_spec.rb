@@ -26,10 +26,16 @@ describe 'creation of media objects' do
     end
 
     it 'returns an empty list whenno mdpi barcodes are found' do
-      codes_str = nil
-      expect(@media_object.parse_barcodes(codes_str)).to match([])
+      expect(@media_object.parse_barcodes(nil)).to match([])
     end
 
+    it 'returns a hash of the request json' do
+      str = '{"part_total":3,"group_name":"GR00034889","parts":[]}'
+      expect(@media_object.parse_json(str).class).to eq(Hash)
+    end
 
+    it 'returns an empty hash when the json cannot be parsed' do
+      expect(@media_object.parse_json(nil)).to eq({})
+    end
   end
 end

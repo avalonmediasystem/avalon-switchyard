@@ -13,6 +13,7 @@
 # ---  END LICENSE_HEADER BLOCK  ---
 
 require 'sinatra/activerecord'
+require 'json'
 
 # Class for creating and working with media objects
 class MediaObject #< ActiveRecord::Base
@@ -26,17 +27,27 @@ class MediaObject #< ActiveRecord::Base
     return_hash = {}
     splitter = '----------'
     return_hash[:barcodes] = parse_barcodes(body.split(splitter)[0])
-    #return_hash{:json}
+    return_hash[:json] = parse_json(body.split(splitter)[1])
 
     return_hash
   end
 
+  # Takes the portion of the request body made up of barcodes and parses the JSON
+  #
+  # @param [String] request_json A string that can be parsed in to json
+  # @return [Hash] A json hash of the param string, if the string cannot be parsed an empty hash is returned
+  def parse_json(request_json)
+    return JSON.parse(request_json)
+  rescue
+    return {} # just return empty hash if we can't parse the json
+  end
+
   # Takes the portion of the request body made up of barcodes and parses them
   # @param [String] codes A list of the codes seperated by endlines ("\n")
-  # @return [Array <String>] An array of all barcodes, kept as strings due to potential leading zeros
+  # @return [Array <String>] An array of all barcodes, kept as strings due to potential leading zeros, if this cannot be parsed an empty array is returned
   def parse_barcodes(codes)
     return codes.split("\n")
-    rescue
-      return [] #just return no codes if we can't extract any
+  rescue
+    return [] # just return no codes if we can't extract any
   end
 end
