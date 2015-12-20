@@ -21,6 +21,7 @@ require 'json'
 require 'logger'
 require 'switchyard_configuration'
 require 'api_token'
+require 'media_objects'
 require 'sinatra/activerecord'
 require 'byebug' if settings.development?
 
@@ -40,6 +41,17 @@ configure do
   # ApiTokens.new.create_token('foo')
 end
 
+helpers do
+  # Function to place on any route that desire to have protected by the Api token,
+  # displays a 401 if the token is not valid
+  #
+  # @return [Nil] Returns nothing if the token is valid, allowing the request to continue
+  def protected!
+    return if ApiToken.new.valid_token?(env['HTTP_API_TOKEN'])
+    halt 401, "Not authorized\n"
+  end
+end
+
 # Displays status information about the app
 #
 # @return [JSON] A JSON has of the status params
@@ -52,7 +64,8 @@ end
 
 # TODO:  Implement retries
 post '/media_objects/create' do
-  # 'Create a media object'
+  protected!
+  byebug
   # object = JSON.parse(request.body)
 end
 
@@ -68,4 +81,8 @@ end
 # TODO: Make sure that Brian will want to get status on collections
 get '/collections/status/:pid' do
   'Get a collection object status'
+end
+
+def valid_api_token?
+  return ApiToken.new
 end

@@ -23,4 +23,13 @@ describe 'Switchyard API Functionality' do
       expect(JSON.parse(last_response.body).class).to eq(Hash)
     end
   end
+  describe 'Creating Media Objects' do
+    describe 'authorization' do
+      it 'requires authorization to create a media object' do
+        post '/media_objects/create'
+        expect(last_response.ok?).to be_falsey
+        expect(last_response.status).to eq(401)
+      end
+    end
+  end
 end

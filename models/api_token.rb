@@ -67,7 +67,7 @@ class ApiToken < ActiveRecord::Base
 
   # Checks to see if the supplied token is a current active token
   def valid_token?(token)
-    return false unless token_looks_safe?(token)
+    return false unless !token.nil? && token_looks_safe?(token)
     result = ApiToken.find_by(token: token)
     !result.nil? && result[:active]
   end
