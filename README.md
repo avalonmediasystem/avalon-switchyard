@@ -101,6 +101,3 @@ All media_objects functions respond in the same manner.  Their responses are:
   - Response Body: json in the form of: `{error: true, error_message: 'Record not found'}`
 
 For further information routes see `switchyard.rb` and for media_object values see `models/media_object.rb`
-
-
-* `500` Internal server error, typically a database connection issue.  For 500 codes   
