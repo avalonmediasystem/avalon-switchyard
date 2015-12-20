@@ -95,6 +95,10 @@ All media_objects functions respond in the same manner.  Their responses are:
     * 'avalon_pid': STRING the object's pid in the selected Avalon, implies successful deposition
     * 'avalon_url': URL to the object in an Avalon, implies successful deposition
     * 'locked': BOOLEAN A Switchyard batch processed has locked the object for some reason and it cannot be updated, resubmission of the object though will cause deletion even if locked is true
+* Resource Not Found
+  - This applies on to `get /media_objects/status/:group_name`
+  - HTTP Code: 404
+  - Response Body: json in the form of: `{error: true, error_message: 'Record not found'}`
 
 For further information routes see `switchyard.rb` and for media_object values see `models/media_object.rb`
 
