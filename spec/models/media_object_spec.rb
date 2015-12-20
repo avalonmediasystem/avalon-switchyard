@@ -25,7 +25,7 @@ describe 'creation of media objects' do
       expect(@media_object.parse_barcodes(codes_str)).to match(codes_arr)
     end
 
-    it 'returns an empty list whenno mdpi barcodes are found' do
+    it 'returns an empty list when no mdpi barcodes are found' do
       expect(@media_object.parse_barcodes(nil)).to match([])
     end
 
@@ -75,21 +75,51 @@ describe 'creation of media objects' do
         end
 
         it 'marks the status as invalid when the group name is nil' do
-          @valid_request[:json]['group_name'] = nil
+          @valid_request[:json][:group_name] = nil
           expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
         end
 
         it 'marks the status as invalid when the group name is an empty string' do
-          @valid_request[:json]['group_name'] = ''
+          @valid_request[:json][:group_name] = ''
           expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
         end
       end
-
-
-
+    end
+  end
+  describe 'registering and destroying an object' do
+    before :all do
+      @content = @media_object.parse_request_body(load_sample_obj)
     end
 
+    it 'registers an object' do
+      @media_object.destroy_object(@content[:json][:group_name])
+      expect(MediaObject.find_by(group_name: @content[:json][:group_name])).to be_nil
+      expect(@media_object.register_object(@content)).to be_truthy
+      expect(MediaObject.find_by(group_name: @content[:json][:group_name])).not_to be_nil
+    end
 
+    it 'retries registering an object when there is an error' do
+      allow(ActiveRecord::Base).to receive(:create).and_raise(ActiveRecord::ConnectionTimeoutError)
+      expect(ActiveRecord::Base).to receive(:create).exactly(Sinatra::Application.settings.max_retries).times
+      expect(@media_object.register_object(@content)).to be_falsey
+    end
 
+    it 'removes a previous entry when an object is retried' do
+      expect(ActiveRecord::Base).to receive(:destroy_all).exactly(:once)
+      expect(@media_object.register_object(@content)).to be_truthy
+    end
+
+    it 'retries destroying an object when there is an error' do
+      allow(ActiveRecord::Base).to receive(:destroy_all).and_raise(ActiveRecord::ConnectionTimeoutError)
+      expect(ActiveRecord::Base).to receive(:destroy_all).exactly(Sinatra::Application.settings.max_retries).times
+      expect(@media_object.destroy_object(@content[:json][:group_name])).to be_falsey
+    end
+
+    it 'destroys an object' do
+      @media_object.register_object(@content)
+      expect(MediaObject.find_by(group_name: @content[:json][:group_name])).not_to be_nil
+      expect(@media_object.destroy_object(@content[:json][:group_name])).to be_truthy
+      expect(MediaObject.find_by(group_name: @content[:json][:group_name])).to be_nil
+    end
   end
 end

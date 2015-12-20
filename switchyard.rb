@@ -36,6 +36,9 @@ configure do
   # @example
   #   Sinatra::Application.settings.app_start_time #=> "2015-12-17T19:02:05Z"
   set :app_start_time, Time.now.utc.iso8601
+  set :max_retries, 5
+  set :max_sleep_seconds, 5
+  set :max_sleep_seconds, 0.2 unless settings.production?
   loader = SwitchyardConfiguration.new
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
   # ApiTokens.new.create_token('foo')
@@ -66,22 +69,16 @@ end
 post '/media_objects/create' do
   protected!
   media_object = MediaObject.new
+
+  # Parse the request and throw a 400 code if bad data was posted in
   object = media_object.parse_request_body(request.body.read)
   halt 400, object[:status][:errors] unless object[:status][:valid] # halt if the provided data is incorrect
-  #media_object.check_object(object)
-  # object = JSON.parse(request.body)
+
+  # Enter the object into SQL as recieved
+
 end
 
-get '/media_objects/status/:pid' do
+get '/media_objects/status/:group_name' do
+  protected!
   'Get a media object status'
-end
-
-# TODO: Make sure that Brian will want to create collections?
-post '/collections/create' do
-  'Create a collection'
-end
-
-# TODO: Make sure that Brian will want to get status on collections
-get '/collections/status/:pid' do
-  'Get a collection object status'
 end
