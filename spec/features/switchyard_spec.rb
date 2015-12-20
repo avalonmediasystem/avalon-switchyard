@@ -49,7 +49,7 @@ describe 'Switchyard API Functionality' do
         it 'halts with error code 500 if the database cannot be accessed' do
           mo = MediaObject.new
           allow(MediaObject).to receive(:new).and_return(mo)
-          allow(mo).to receive(:register_object).and_return(false)
+          allow(mo).to receive(:register_object).and_return(success: false, error: 404)
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(500)
         end
