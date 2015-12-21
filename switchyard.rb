@@ -58,7 +58,7 @@ helpers do
   end
 
   def record_not_found!
-    halt 404, { error: true, message: 'Record not found' }.to_json
+    halt 200, { error: true, message: 'Record not found' }.to_json
   end
 end
 

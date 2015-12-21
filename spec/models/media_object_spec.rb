@@ -136,11 +136,12 @@ describe 'creation of media objects' do
       expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to be_nil
     end
 
-    it 'returns 404 when the object is not found' do
+    it 'returns 404 and a message when the object is not found' do
       @media_object.destroy_object(@object[:group_name])
       expect(@media_object.object_status_as_json(@object[:group_name]).class).to eq(Hash)
       expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to eq(404)
       expect(@media_object.object_status_as_json(@object[:group_name])[:success]).to be_falsey
+      expect(@media_object.object_status_as_json(@object[:group_name])[:message]).not_to be_nil
     end
 
     it 'returns 500 when the databsase cannot be reached' do

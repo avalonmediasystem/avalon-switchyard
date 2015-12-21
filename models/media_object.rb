@@ -95,7 +95,7 @@ class MediaObject < ActiveRecord::Base
     destroy_object(obj[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.create(group_name: obj[:json][:group_name], status: 'received', error: false, last_modified: t, created: t, locked: false)
+      MediaObject.create(group_name: obj[:json][:group_name], status: 'received', error: false, message: 'object rceived, awaiting routing', last_modified: t, created: t, locked: false)
       return { success: true, group_name: obj[:json][:group_name] }
     end
   rescue
@@ -124,7 +124,7 @@ class MediaObject < ActiveRecord::Base
   def object_status_as_json(group_name)
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       obj = MediaObject.find_by(group_name: group_name)
-      rv = { success: false, error: 404 }
+      rv = { success: false, error: 404, message: 'object not found in database' }
       rv = JSON.parse(obj.to_json) unless obj.nil?
       return rv
     end

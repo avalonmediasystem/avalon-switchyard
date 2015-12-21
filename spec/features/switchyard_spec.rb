@@ -54,12 +54,16 @@ describe 'Switchyard API Functionality' do
           expect(last_response.status).to eq(500)
         end
 
-        it 'halts with error code 404 if the object is not found immediately after registration' do
+        it 'halts with error code 200 if the object is not found immediately after registration' do
           mo = MediaObject.new
           allow(MediaObject).to receive(:new).and_return(mo)
           allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 404)
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
-          expect(last_response.status).to eq(404)
+          expect(last_response.status).to eq(200)
+          expect(last_response.status).to eq(200)
+          result = JSON.parse(last_response.body).symbolize_keys
+          expect(result[:error]).to be_truthy
+          expect(result[:message]).not_to be_nil
         end
 
         it 'halts with error code 500 if the database times out while trying to get the object' do
@@ -104,10 +108,13 @@ describe 'Switchyard API Functionality' do
       end
     end
 
-    it 'returns 404 if the object is not found' do
+    it 'returns 200 if the object is not found' do
       get '/media_objects/status/IndianaFootball', nil, 'HTTP_API_TOKEN' => @valid_token
-      expect(last_response.ok?).to be_falsey
-      expect(last_response.status).to eq(404)
+      expect(last_response.ok?).to be_truthy
+      expect(last_response.status).to eq(200)
+      result = JSON.parse(last_response.body).symbolize_keys
+      expect(result[:error]).to be_truthy
+      expect(result[:message]).not_to be_nil
     end
 
     it 'returns 500 if the database is unavailable' do
