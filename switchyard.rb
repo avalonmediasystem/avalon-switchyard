@@ -54,11 +54,11 @@ helpers do
   end
 
   def database_connection_failure!
-    halt 500, { error: true, error_message: 'Could not connect to database' }.to_json
+    halt 500, { error: true, message: 'Could not connect to database' }.to_json
   end
 
   def record_not_found!
-    halt 404, { error: true, error_message: 'Record not found' }.to_json
+    halt 404, { error: true, message: 'Record not found' }.to_json
   end
 end
 
@@ -80,7 +80,7 @@ post '/media_objects/create' do
 
   # Parse the request and throw a 400 code if bad data was posted in
   object = media_object.parse_request_body(request.body.read)
-  halt 400, { status: '400', error: true, error_message: object[:status][:error] }.to_json unless object[:status][:valid] # halt if the provided data is incorrect
+  halt 400, { status: '400', error: true, message: object[:status][:error] }.to_json unless object[:status][:valid] # halt if the provided data is incorrect
   registeration_results = media_object.register_object(object)
   database_connection_failure! unless registeration_results[:success]
 

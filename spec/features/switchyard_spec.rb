@@ -79,7 +79,6 @@ describe 'Switchyard API Functionality' do
           expect(result[:status]).to eq('received')
           expect(result[:locked]).to be_falsey
           expect(result[:error]).to be_falsey
-          expect(result[:error_message]).to be_nil
         end
       end
     end
