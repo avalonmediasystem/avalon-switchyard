@@ -22,20 +22,17 @@ class MediaObject < ActiveRecord::Base
   #
   # @param [String] body The body of the post request
   # @return [Hash] return A parsed Hash of the request
-  # @return return [Array <String>] :barcodes an array listing all MDPI barcodes sent in the reuqest
   # @return return [Hash] :json The JSON repsentation of the object
   # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
   def parse_request_body(body)
     return_hash = {}
-    splitter = '----------'
-    return_hash[:barcodes] = parse_barcodes(body.split(splitter)[0])
-    return_hash[:json] = parse_json(body.split(splitter)[1])
+    return_hash[:json] = parse_json(body)
     check_request(return_hash)
   end
 
-  # Checks the submitted request for at least one barcode, valid json, and a group name
+  # Checks the submitted request for valid json, and a group name
   #
   # @param [Hash] hashed_request The request broken up by parse_request_body
   # @return [Hash] hashed_request The submitted request with additional error information
@@ -44,11 +41,6 @@ class MediaObject < ActiveRecord::Base
   # @return :status [String] :errors Any errors encountered, nil if valid is true
   def check_request(hashed_request)
     failure_reasons = ''
-
-    # Make sure we have barcodes
-    if hashed_request[:barcodes].size == 0
-      failure_reasons << 'No barcodes found on parse.  '
-    end
 
     # Make sure we have JSON
     if hashed_request[:json].keys.size == 0
@@ -66,7 +58,7 @@ class MediaObject < ActiveRecord::Base
     hashed_request
   end
 
-  # Takes the portion of the request body made up of barcodes and parses the JSON
+  # Takes the portion of the request body and parses the JSON
   #
   # @param [String] request_json A string that can be parsed in to json
   # @return [Hash] A json hash of the param string, if the string cannot be parsed an empty hash is returned
@@ -74,15 +66,6 @@ class MediaObject < ActiveRecord::Base
     return JSON.parse(request_json).symbolize_keys
   rescue
     return {} # just return empty hash if we can't parse the json
-  end
-
-  # Takes the portion of the request body made up of barcodes and parses them
-  # @param [String] codes A list of the codes seperated by endlines ("\n")
-  # @return [Array <String>] An array of all barcodes, kept as strings due to potential leading zeros, if this cannot be parsed an empty array is returned
-  def parse_barcodes(codes)
-    return codes.split("\n")
-  rescue
-    return [] # just return no codes if we can't extract any
   end
 
   # Registers the object in my sql

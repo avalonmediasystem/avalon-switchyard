@@ -19,16 +19,6 @@ describe 'creation of media objects' do
     @media_object = MediaObject.new
   end
   describe 'parsing post requests' do
-    it 'returns a list of mdpi barcodes' do
-      codes_str = "18\n17\n19\n29\n20\n06"
-      codes_arr = %w(18 17 19 29 20 06)
-      expect(@media_object.parse_barcodes(codes_str)).to match(codes_arr)
-    end
-
-    it 'returns an empty list when no mdpi barcodes are found' do
-      expect(@media_object.parse_barcodes(nil)).to match([])
-    end
-
     it 'returns a hash of the request json' do
       str = '{"part_total":3,"group_name":"GR00034889","parts":[]}'
       expect(@media_object.parse_json(str).class).to eq(Hash)
@@ -39,7 +29,6 @@ describe 'creation of media objects' do
     end
 
     it 'can parse a full request body' do
-      expect(@media_object.parse_request_body(load_sample_obj)[:barcodes]).not_to be_empty
       expect(@media_object.parse_request_body(load_sample_obj)[:json].keys).not_to be_empty
     end
 
@@ -62,11 +51,6 @@ describe 'creation of media objects' do
       describe 'checking for omission of a specific piece of the request' do
         before :each do
           @valid_request = @media_object.parse_request_body(load_sample_obj(filename: @fixture))
-        end
-
-        it 'marks the status as invalid when there are no barcodes' do
-          @valid_request[:barcodes] = []
-          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
         end
 
         it 'marks the status as invalid when there is no json' do
