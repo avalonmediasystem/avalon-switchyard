@@ -13,14 +13,16 @@
 # ---  END LICENSE_HEADER BLOCK  ---
 
 require 'switchyard_configuration'
+require 'retries'
+require 'restclient'
 
 # Stub class for routing content to Avalon, always picks the default currently
 class Router
   # Selects the avalon to route the posted content to
   #
-  # @param [Hash] the content posted to router as JSON with keys symbolized
+  # @param [Hash] the object posted to router as JSON with keys symbolized
   # @return [Hash] the Avalon selected with the keys :url and :api_token
-  def select_avalon(content)
+  def select_avalon(object)
     SwitchyardConfiguration.new.load_yaml('avalons.yml')['default'].symbolize_keys
   end
 end

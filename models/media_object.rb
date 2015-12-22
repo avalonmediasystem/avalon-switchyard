@@ -114,4 +114,16 @@ class MediaObject < ActiveRecord::Base
   rescue
     return { success: false, error: 500 }
   end
+
+  # Transforms the posted object into the json form needed to submit it to an Avalon instance
+  #
+  # @param [Hash] source The JSON submitted to the router with its keys symbolized
+  # @return [Hash] the object in the hash needed to submit it to Avalon
+  def transform_object(posted_content)
+    # Step 1, determine where this object is headed
+    target = Router.new.select_avalon(posted_content)
+    collection_pid = Collection.new.get_or_create_collection_pid(object, target)
+    #collection_info =
+    #collection_object.create_collection unless collection_object.ex
+  end
 end

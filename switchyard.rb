@@ -22,6 +22,8 @@ require 'logger'
 require 'switchyard_configuration'
 require 'api_token'
 require 'media_object'
+require 'router'
+#require 'collection'
 require 'sinatra/activerecord'
 require 'byebug' if settings.development?
 
@@ -85,22 +87,25 @@ post '/media_objects/create' do
   database_connection_failure! unless registeration_results[:success]
 
   # Display the object as it is currently entered into the database
-  final_form = media_object.object_status_as_json(registeration_results[:group_name])
-  unless final_form[:success]
-    database_connection_failure! if final_form[:error] == 500
-    record_not_found! if final_form[:error] == 404
+  status = media_object.object_status_as_json(registeration_results[:group_name])
+  unless status[:success]
+    database_connection_failure! if status[:error] == 500
+    record_not_found! if status[:error] == 404
   end
-  final_form.to_json
+  stream do |out|
+    out << status.to_json # return the initial status so MDPI has some response and then keep working
+    # media_object.transform_object(object[:json])
+  end
 end
 
 get '/media_objects/status/:group_name' do
   content_type :json
   protected!
   media_object = MediaObject.new
-  final_form = media_object.object_status_as_json(params[:group_name])
-  unless final_form[:success]
-    database_connection_failure! if final_form[:error] == 500
-    record_not_found! if final_form[:error] == 404
+  status = media_object.object_status_as_json(params[:group_name])
+  unless status[:success]
+    database_connection_failure! if status[:error] == 500
+    record_not_found! if status[:error] == 404
   end
-  final_form.to_json
+  status.to_json
 end
