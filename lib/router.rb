@@ -21,6 +21,6 @@ class Router
   # @param [Hash] the content posted to router as JSON with keys symbolized
   # @return [Hash] the Avalon selected with the keys :url and :api_token
   def select_avalon(content)
-    SwitchyardConfiguration.new.load_yaml('avalons.yml')
+    SwitchyardConfiguration.new.load_yaml('avalons.yml')['default'].symbolize_keys
   end
 end

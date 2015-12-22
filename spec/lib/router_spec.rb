@@ -18,5 +18,7 @@ describe 'selecting the avalon target' do
   it 'always selects the default avalon' do
     avalon_selected = Router.new.select_avalon('foo')
     expect(avalon_selected.class).to eq(Hash)
+    expect(avalon_selected[:url]).not_to be_nil
+    expect(avalon_selected[:api_token]).not_to be_nil
   end
 end
