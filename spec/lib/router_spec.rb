@@ -12,5 +12,11 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-class Avalons
+
+
+describe 'selecting the avalon target' do
+  it 'always selects the default avalon' do
+    avalon_selected = Router.new.select_avalon('foo')
+    expect(avalon_selected.class).to eq(Hash)
+  end
 end

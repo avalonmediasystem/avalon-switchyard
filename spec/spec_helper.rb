@@ -26,6 +26,7 @@ require 'restclient'
 require 'switchyard_configuration'
 require 'api_token'
 require 'media_object'
+require 'router'
 
 ENV['RACK_ENV'] = 'test'
 
