@@ -174,9 +174,21 @@ describe 'creation of media objects' do
           expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
           @media_object.file_structure_as_xml({} , {})
         end
+
+        describe 'parsing file info' do
+          it 'can parse info for one file in an object' do
+            expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
+          end
+
+          # Turn this back on once file parsing has been finalized
+          xit 'writes an error when the file cannot be parsed' do
+            expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+            @media_object.get_file_info(@object, @file_info)
+          end
+        end
       end
 
-      describe 'getting the file formation' do
+      describe 'getting the file format' do
         it 'can get the file format' do
           expect(@media_object.get_file_format(@object).class).to eq(String)
         end

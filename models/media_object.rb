@@ -161,10 +161,11 @@ class MediaObject < ActiveRecord::Base
   # @param [String] file the representation of the file's information in a string that can be parsed as XML
   # @return [Hash] a hash of the file ready for addition to :files
   def get_file_info(object, file)
+    # TODO: Split me up further once file parsing is finalized
     file_hash = {}
-    info = {}
+    file_info = {}
     begin
-      info = Hash.from_xml(file['structure'])['item']
+      file_info = Hash.from_xml(file['structure'])['Item']
     rescue
       object_error_and_exit(object, "failed to xml describing the object's files information as xml")
     end
@@ -175,16 +176,16 @@ class MediaObject < ActiveRecord::Base
     file_hash[:percent_succeeded] = '100.0'
     file_hash[:percent_failed] = '0'
     file_hash[:status_code] = 'COMPLETED'
-    file_hash[:label] = info['label']
+    file_hash[:label] = file_info['label']
 
     # Get the file structure as XML and delete the label part out of it
     # We don't need this, so we only error if it is there but badly formed
-    s = file_structure_as_xml(info, object)
+    s = file_structure_as_xml(file_info, object)
     file_hash[:structure] = s unless s.nil?
 
     # Get the rest of the file info
     # TODO: For now we are only supporting the high derivative
-    high_data = file['structure']['high']
+    high_data = file['q']['high']
     object_error_and_exit(object, 'failed to find high quality deriviative for object') if high_data.nil?
     ffprobe_data = Hash.from_xml(high_data['ffprobe'])['ffprobe']
 
