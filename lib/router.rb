@@ -23,6 +23,8 @@ class Router
   # @param [Hash] the object posted to router as JSON with keys symbolized
   # @return [Hash] the Avalon selected with the keys :url and :api_token
   def select_avalon(object)
+    # When it comes time to actually implement this, the Media Object function get_collection_name(object) will return the collection of an object
+    # For now thought, default it is:
     SwitchyardConfiguration.new.load_yaml('avalons.yml')['default'].symbolize_keys
   end
 end
