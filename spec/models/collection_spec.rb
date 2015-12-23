@@ -56,12 +56,10 @@ describe 'collection management' do
     end
 
     it 'attempts to create the collection via post' do
-      expect(RestClient).to receive(:post).at_least(:once)
-      @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
-    end
-
-    it 'attempts to create the collection via RestClient post' do
-      expect(RestClient).to receive(:post).at_least(:once)
+      stub_request(:post, "https://test.edu/admin/collections").
+        with(:body => {"admin_collection"=>{"name"=>"test", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"test", "managers"=>["test1@example.edu", "test2@example.edu"]}},
+             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'239', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+        to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
       @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
     end
 
@@ -71,9 +69,13 @@ describe 'collection management' do
              :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'239', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
         to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
 
-      res = @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
-      expect(res.code).to eq(200)
-      expect(JSON.parse(res.body).symbolize_keys[:id]).to eq('pid')
+      expect(@collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})).to eq('pid')
+    end
+
+    it 'calls post collection if a collection does not exist' do
+      allow(@collection).to receive(:collection_information).and_return({exists: false}, {exists: true, pid: 'foo'})
+      expect(@collection).to receive(:post_new_collection).at_least(:once).and_return('foo')
+      expect(@collection.get_or_create_collection_pid({stub: 'object', metadata: {'unit'=>'foo'}}, url: 'http://somewhere.edu')).to eq('foo')
     end
   end
 end
