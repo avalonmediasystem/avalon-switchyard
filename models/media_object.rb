@@ -182,13 +182,13 @@ class MediaObject < ActiveRecord::Base
     # Populate the rest if Fields
     # Make sure the XML can be parsed by having Nokogiri take a pass at it
     fields = {}
-    hash_mods = {}
+    hash_mods = parse_mods(object)
 
     # Check for the default fields we need, we may only have these if a machine generated mods
-    fields[:title] = hash_mods['titleInfo']['title']
+    fields[:title] = hash_mods['titleInfo']['title'] || 'Untitled'
     fields[:creator] = ['MDPI']
-    fields[:date_issued] = hash_mods['originInfo']
-    fields[]
+    fields[:date_issued] = hash_mods['originInfo'] || '19uu'
+
 
     # Check for a creation date
     unless hash_mods['recordInfo'].nil?
@@ -197,7 +197,7 @@ class MediaObject < ActiveRecord::Base
     fields[:date_created] = Time.now.to_s.delete(' ') if fields[:date_created].nil?
 
     # Get the CatKey if we have one
-    fields[:bibliographic_id] = obj[:metadata]['iucat_barcode']
+    fields[:bibliographic_id] = object[:metadata]['iucat_barcode']
 
     fields
   end
