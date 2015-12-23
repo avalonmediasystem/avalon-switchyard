@@ -119,9 +119,8 @@ class MediaObject < ActiveRecord::Base
   # Transforms the posted object into the json form needed to submit it to an Avalon instance
   #
   # @param [Hash] object The JSON submitted to the router with its keys symbolized
-  # @return [JSON] the object in the json form needed to submit it to Avalon
+  # @return [String] the object in the json format needed to submit it to Avalon
   def transform_object(object)
-    byebug
     files = {}
     # TODO: Refactor this out into some sub functions and follow DRY regarding the object error call
 

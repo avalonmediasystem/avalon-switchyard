@@ -157,8 +157,13 @@ describe 'creation of media objects' do
     end
 
     describe 'parsing file information for an object' do
-      xit 'can parse the files' do
-        byebug
+      it 'can transform the object' do
+        allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+        transform = @media_object.transform_object(@object)
+        expect(transform.class).to eq(String)
+        expect(JSON.parse(transform).keys).to match(['fields','files'])
+        expect(JSON.parse(transform)['fields'].class).to eq(Hash)
+        expect(JSON.parse(transform)['files'].class).to eq(Array)
       end
 
       describe 'getting the file structure' do
