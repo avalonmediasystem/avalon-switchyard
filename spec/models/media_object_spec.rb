@@ -185,6 +185,14 @@ describe 'creation of media objects' do
             expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
             @media_object.get_file_info(@object, @file_info)
           end
+
+          describe do
+            it 'can parse all files in an object' do
+              parse = @media_object.get_all_file_info(@object)
+              expect(parse.class).to eq(Array)
+              expect(parse[0].class).to eq(Hash)
+            end
+          end
         end
       end
 

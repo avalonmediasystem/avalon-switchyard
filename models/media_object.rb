@@ -149,10 +149,11 @@ class MediaObject < ActiveRecord::Base
     # Loop over every part
     object[:parts].each do |part|
       # Loop over all the files in a part
-      part['files'].keys.each do |file|
-        return_array << get_file_info(object, file)
+      part['files'].keys.each do |key|
+        return_array << get_file_info(object, part['files'][key])
       end
     end
+    return_array
   end
 
   # Gets all needed information on a file from its posted string
