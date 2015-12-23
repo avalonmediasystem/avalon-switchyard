@@ -15,6 +15,7 @@
 require 'sinatra/activerecord'
 require 'json'
 require 'retries'
+require 'nokogiri'
 
 # Class for creating and working with media objects
 class MediaObject < ActiveRecord::Base
@@ -118,7 +119,7 @@ class MediaObject < ActiveRecord::Base
   # Transforms the posted object into the json form needed to submit it to an Avalon instance
   #
   # @param [Hash] object The JSON submitted to the router with its keys symbolized
-  # @return [Hash] the object in the json form needed to submit it to Avalon
+  # @return [JSON] the object in the json form needed to submit it to Avalon
   def transform_object(object)
     byebug
     files = {}
@@ -134,6 +135,75 @@ class MediaObject < ActiveRecord::Base
     rescue
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
+
+    files = get_all_file_info(object)
+    {fields: fields, files: files}.to_json
+  end
+
+  # Gets the file info for an object in the form needed to submit to Avalon, writes an error and terminates the thread if it cannot
+  #
+  # @param [Hash] object the object as posted
+  # @return [Array <Hash>] All the files hashed for Avalon
+  def get_all_file_info(object)
+    return_array = []
+    # Loop over every part
+    object[:parts].each do |part|
+      # Loop over all the files in a part
+      part['files'].keys.each do |file|
+        return_array << get_file_info(object, file)
+      end
+    end
+  end
+
+  # Gets all needed information on a file from its posted string
+  #
+  # @param [Hash] object the object passed to switchyard
+  # @param [String] file the representation of the file's information in a string that can be parsed as XML
+  # @return [Hash] a hash of the file ready for addition to :files
+  def get_file_info(object, file)
+    file_hash = {}
+    begin
+      info = Hash.from_xml(file['structure'])['item']
+    rescue
+      object_error_and_exit(object, "failed to xml describing the object's files information as xml")
+    end
+
+    # Setup the defaults
+    file_hash[:workflow_name] = 'avalon'
+    file_hash[:percent_complete] = '100.0'
+    file_hash[:percent_succeeded] = '100.0'
+    file_hash[:percent_failed] = '0'
+    file_hash[:status_code] = 'COMPLETED'
+    file_hash[:label] = info['label']
+
+    # Get the file structure as XML and delete the label part out of it
+    # We don't need this, so we only error if it is there but badly formed
+    begin
+      file_hash[:structure] = info['Span'].to_xml.to_s unless info['Span'].nil?
+    rescue
+      object_error_and_exit(object, 'failed to parse the xml representing the file structure')
+    end
+
+    # Get the rest of the file info
+    # TODO: For now we are only supporting the high derivative
+    high_data = file['structure']['high']
+    object_error_and_exit(object, 'failed to find high quality deriviative for object') if high_data.nil?
+    ffprobe_data = Hash.from_xml(high_data['ffprobe'])['ffprobe']
+
+    file_hash[:file_location] = high_data['url']
+    begin
+      file_hash[:file_size] = ffprobe_data['format']['size']
+      file_hash[:duration] = ffprobe_data['format']['duration']
+      file_hash[:poster_offset] = '0:01'
+      file_hash[:thumbnail_offset] = '0:01'
+      file_hash[:date_ingested] = DateTime.parse(file['ingest']).beginning_of_day.strftime("%Y-%m-%d")
+      file_hash[:display_aspect_ratio] = 'placeholder' # TODO: some ffprobes seem to have this, some don't, it is not consistent
+      file_hash[:checksum] = 'placeholder'
+      file_hash[:original_frame_size] = 'placeholder'
+    rescue
+      object_error_and_exit(object, 'failed to parse ffprobe data for object') if high_data.nil?
+    end
+    file_hash
   end
 
   # Updates the status of an object in the SQL database for future queries
@@ -178,6 +248,9 @@ class MediaObject < ActiveRecord::Base
   end
 
   # Extract the required fields from the mods for creating a collection, if the fields cannot be extracted it logs an error in the db and halts
+  #
+  # @param [Hash] object the object as a hash
+  # @return [Hash] a hash of the fields
   def get_fields_from_mods(object)
     # Populate the rest if Fields
     # Make sure the XML can be parsed by having Nokogiri take a pass at it
@@ -188,7 +261,6 @@ class MediaObject < ActiveRecord::Base
     fields[:title] = hash_mods['titleInfo']['title'] || 'Untitled'
     fields[:creator] = ['MDPI']
     fields[:date_issued] = hash_mods['originInfo'] || '19uu'
-
 
     # Check for a creation date
     unless hash_mods['recordInfo'].nil?

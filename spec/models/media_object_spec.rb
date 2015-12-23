@@ -156,6 +156,12 @@ describe 'creation of media objects' do
       @object = @media_object.parse_request_body(load_sample_obj)[:json]
     end
 
+    describe 'parsing file information for an object' do
+      xit 'can parse the files' do
+        byebug
+      end
+    end
+
     describe 'obtaining field information for an object' do
       describe 'parsing mods' do
         it 'it can parse the mods' do
@@ -226,9 +232,6 @@ describe 'creation of media objects' do
       @media_object.register_object(content)
       expect(@media_object.object_status_as_json(content[:json][:group_name])['error']).to be_falsey
       @media_object.object_error_and_exit(content[:json], 'test error')
-      expect(@media_object.object_status_as_json(content[:json][:group_name])['error']).to be_truthy
-      expect(@media_object.object_status_as_json(content[:json][:group_name])['message']).to eq('test error')
-
     end
   end
 end
