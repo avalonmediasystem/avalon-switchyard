@@ -19,6 +19,32 @@ require 'nokogiri'
 
 # Class for creating and working with media objects
 class MediaObject < ActiveRecord::Base
+  # Posts a new media object to an Avalon, creates the collection first if needed
+  # Writes the status of the submission to the database
+  #
+  # @param [Hash] object the object as submitted to Switchyard
+  def post_new_media_object(object)
+    routing_target = attempt_to_route(object)
+    payload = transform_object(object)
+
+    post_path = target[:url] + '/media_objects.json'
+
+    resp = ''
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+      resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:token]}
+    end
+    object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
+    pid = JSON.parse(resp.body).symbolize_keys[:id]
+    update_info = { status: 'submitted',
+                    error: false,
+                    last_modified: Time.now.utc.iso8601.to_s,
+                    avalon_chosen: target[:url],
+                    avalon_pid: pid,
+                    avalon_url: "#{target[:url]}/#{pid}",
+                    message: 'successfully submitted' }
+    update_status(object[:group_name], update_info)
+  end
+
   # Takes the information posts to the API in the request body and parses it
   #
   # @param [String] body The body of the post request
@@ -121,12 +147,6 @@ class MediaObject < ActiveRecord::Base
   # @param [Hash] object The JSON submitted to the router with its keys symbolized
   # @return [String] the object in the json format needed to submit it to Avalon
   def transform_object(object)
-    files = {}
-    # TODO: Refactor this out into some sub functions and follow DRY regarding the object error call
-
-    target = attempt_to_route(object)
-
-    # Setup the fields needed for the ingestation
     fields = {}
     begin
       fields = get_fields_from_mods(object)
@@ -136,7 +156,9 @@ class MediaObject < ActiveRecord::Base
     end
 
     files = get_all_file_info(object)
-    {fields: fields, files: files}.to_json
+    final = { fields: fields, files: files }
+    final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
+    return final.to_json
   end
 
   # Gets the file info for an object in the form needed to submit to Avalon, writes an error and terminates the thread if it cannot
@@ -195,12 +217,12 @@ class MediaObject < ActiveRecord::Base
       file_hash[:duration] = ffprobe_data['format']['duration']
       file_hash[:poster_offset] = '0:01'
       file_hash[:thumbnail_offset] = '0:01'
-      file_hash[:date_ingested] = DateTime.parse(file['ingest']).beginning_of_day.strftime("%Y-%m-%d")
+      file_hash[:date_ingested] = Time.strptime(file['ingest'].split(' ')[0], "%m/%d/%Y").to_s.split(' ')[0]
       file_hash[:display_aspect_ratio] = 'placeholder' # TODO: some ffprobes seem to have this, some don't, it is not consistent
       file_hash[:checksum] = 'placeholder'
       file_hash[:original_frame_size] = 'placeholder'
     rescue
-      object_error_and_exit(object, 'failed to parse ffprobe data for object') if high_data.nil?
+      object_error_and_exit(object, 'failed to parse ffprobe data for object')
     end
 
     file_hash[:file_format] = get_file_format(object)
@@ -224,7 +246,7 @@ class MediaObject < ActiveRecord::Base
   # @param [Hash] object the posted object in json
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
-    update_status(object[:group_name], error: true, message: message, last_modified: Time.now.utc.iso8601)
+    update_status(object[:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
     exit
   end
 
