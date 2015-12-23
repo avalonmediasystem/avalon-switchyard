@@ -49,4 +49,31 @@ describe 'collection management' do
     expect(@collection.collection_information('Noooooo', 'vader')[:exists]).to be_falsey
     expect(@collection.collection_information('darth', 'vader')[:exists]).to be_truthy
   end
+
+  describe 'creating a collection via POST to Avalon' do
+    before :all do
+      @data= {name: 'test', unit: 'test', managers: ['test1@example.edu', 'test2@example.edu']}
+    end
+
+    it 'attempts to create the collection via post' do
+      expect(RestClient).to receive(:post).at_least(:once)
+      @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
+    end
+
+    it 'attempts to create the collection via RestClient post' do
+      expect(RestClient).to receive(:post).at_least(:once)
+      @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
+    end
+
+    it 'forms a post request properly' do
+      stub_request(:post, "https://test.edu/admin/collections").
+        with(:body => {"admin_collection"=>{"name"=>"test", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"test", "managers"=>["test1@example.edu", "test2@example.edu"]}},
+             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'239', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+        to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
+
+      res = @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
+      expect(res.code).to eq(200)
+      expect(JSON.parse(res.body).symbolize_keys[:id]).to eq('pid')
+    end
+  end
 end

@@ -32,6 +32,7 @@ end
 group :test do
   gem 'capybara'
   gem 'rspec'
+  gem 'webmock'
 end
 
 group :development, :test do

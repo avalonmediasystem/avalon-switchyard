@@ -21,6 +21,7 @@ require File.expand_path '../../switchyard.rb', __FILE__
 require 'pathname'
 require 'sinatra/activerecord'
 require 'restclient'
+require 'webmock/rspec'
 
 # Switchyard Specific Requires
 require 'switchyard_configuration'
