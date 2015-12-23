@@ -161,7 +161,7 @@ class MediaObject < ActiveRecord::Base
   # @param [Hash] object Hash of the object supplied
   # @return [String] the url of the target avalon
   def attempt_to_route(object)
-    target = Router.new.select_avalon(posted_content)
+    target = Router.new.select_avalon(object)
     object_error_and_exit(object, 'could not route to an avalon') if target.nil?
     target
   end

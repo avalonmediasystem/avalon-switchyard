@@ -186,18 +186,24 @@ describe 'creation of media objects' do
             expect(fields.keys.include? field).to be_truthy
             expect(fields[field]).not_to be_nil
           end
+        end
+      end
 
+      describe 'routing an object' do
+        it 'can route the object' do
+          expect(@media_object.attempt_to_route(@object).class).to eq(Hash)
+        end
+
+        # This doesn't work right now since we have no routing intelligence and just always assume default
+        xit 'writes an error when the object cannot be routed' do
+          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+          @media_object.attempt_to_route({})
         end
       end
 
 
 
 
-    end
-
-    xit 'posts an object' do
-      obj =
-      byebug
     end
   end
 end
