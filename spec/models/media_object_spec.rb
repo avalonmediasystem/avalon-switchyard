@@ -168,6 +168,19 @@ describe 'creation of media objects' do
         end
       end
 
+      describe 'getting the collection name' do
+        it 'can get the collection name' do
+          expect(@media_object.get_collection_name(@object).class).to eq(String)
+        end
+
+        it 'writes an error when the collection name cannot be obtained' do
+          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+          @media_object.get_collection_name({})
+        end
+      end
+
+
+
 
     end
 
