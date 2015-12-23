@@ -226,7 +226,6 @@ describe 'creation of media objects' do
 
   describe 'recording errors' do
     it 'writes an error to the database' do
-      #expect(@media_object).to receive(:update_status).at_least(:once)
       content = @media_object.parse_request_body(load_sample_obj)
       @media_object.destroy_object(content[:json][:group_name])
       @media_object.register_object(content)
