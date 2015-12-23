@@ -189,7 +189,7 @@ describe 'creation of media objects' do
         end
       end
 
-      describe 'routing an object' do
+      describe 'routing an object and determining collection' do
         it 'can route the object' do
           expect(@media_object.attempt_to_route(@object).class).to eq(Hash)
         end
@@ -198,6 +198,21 @@ describe 'creation of media objects' do
         xit 'writes an error when the object cannot be routed' do
           expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
           @media_object.attempt_to_route({})
+        end
+
+        it 'can determine the collection of an object' do
+          collection = Collection.new
+          allow(Collection).to receive(:new).and_return(collection)
+          allow(collection).to receive(:get_or_create_collection_pid).and_return('foo')
+          expect(@media_object.get_object_collection_id(@object, 'target')).to eq('foo')
+        end
+
+        it 'can writes an error if it cannot get the collection pid' do
+          collection = Collection.new
+          allow(Collection).to receive(:new).and_return(collection)
+          allow(collection).to receive(:get_or_create_collection_pid).and_return(nil)
+          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+          @media_object.get_object_collection_id(@object, 'target')
         end
       end
 
