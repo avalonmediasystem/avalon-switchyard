@@ -151,9 +151,28 @@ describe 'creation of media objects' do
     end
   end
 
-  describe 'posting an object' do
+  describe 'transforming posting an object' do
+    before :all do
+      @object = @media_object.parse_request_body(load_sample_obj)[:json]
+    end
+
+    describe 'obtaining field information for an object' do
+      describe 'parsing mods' do
+        it 'it can parse the mods' do
+          expect(@media_object.parse_mods(@object).class).to eq(Hash)
+        end
+
+        it 'writes an error when the mods cannot be parsed' do
+          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+          @media_object.parse_mods({})
+        end
+      end
+
+
+    end
+
     xit 'posts an object' do
-      obj = @media_object.parse_request_body(load_sample_obj)[:json]
+      obj =
       byebug
     end
   end
