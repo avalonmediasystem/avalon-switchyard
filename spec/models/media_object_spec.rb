@@ -160,6 +160,22 @@ describe 'creation of media objects' do
       xit 'can parse the files' do
         byebug
       end
+
+      describe 'getting the file structure' do
+        before :all do
+          @media_object.register_object(@object)
+          @file_info = @object[:parts][0]['files']['1']
+        end
+        it 'returns the file structure for a file' do
+          expect(@media_object.file_structure_as_xml( Hash.from_xml(@file_info['structure'])['Item']['Span'], @object).class).to eq(Hash)
+        end
+
+        it 'writes an error when the file structure cannot be parsed' do
+          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+          @media_object.file_structure_as_xml({},{})
+        end
+      end
+
     end
 
     describe 'obtaining field information for an object' do

@@ -162,6 +162,7 @@ class MediaObject < ActiveRecord::Base
   # @return [Hash] a hash of the file ready for addition to :files
   def get_file_info(object, file)
     file_hash = {}
+    info = {}
     begin
       info = Hash.from_xml(file['structure'])['item']
     rescue
@@ -178,11 +179,8 @@ class MediaObject < ActiveRecord::Base
 
     # Get the file structure as XML and delete the label part out of it
     # We don't need this, so we only error if it is there but badly formed
-    begin
-      file_hash[:structure] = info['Span'].to_xml.to_s unless info['Span'].nil?
-    rescue
-      object_error_and_exit(object, 'failed to parse the xml representing the file structure')
-    end
+    s = file_structure_as_xml(info, object)
+    file_hash[:structure] = s unless s.nil?
 
     # Get the rest of the file info
     # TODO: For now we are only supporting the high derivative
@@ -301,6 +299,18 @@ class MediaObject < ActiveRecord::Base
       object_error_and_exit(object, 'failed to parse mods as XML')
     end
     hash_mods
+  end
+
+  # Gets the file structure information and returns it as XML
+  #
+  # @param [Hash] info the structure information on the object
+  # @param [Hash] the object passed to Switchyard
+  def file_structure_as_xml(info, object)
+    # Get the file structure as XML and delete the label part out of it
+    # We don't need this, so we only error if it is there but badly formed
+    return info['Span'].to_xml.to_s
+  rescue
+    object_error_and_exit(object, 'failed to parse the xml representing the file structure')
   end
 
 end
