@@ -120,10 +120,27 @@ class MediaObject < ActiveRecord::Base
   # @param [Hash] source The JSON submitted to the router with its keys symbolized
   # @return [Hash] the object in the hash needed to submit it to Avalon
   def transform_object(posted_content)
-    # Step 1, determine where this object is headed
-    target = Router.new.select_avalon(posted_content)
-    collection_pid = Collection.new.get_or_create_collection_pid(object, target)
+    # Step 1, determine where this object is headed and its collection pid
+    begin
+      target = Router.new.select_avalon(posted_content)
+      collection_pid = Collection.new.get_or_create_collection_pid(object, target)
+    rescue
+      halt
+    end
+
+
     #collection_info =
     #collection_object.create_collection unless collection_object.ex
+  end
+
+  # Updates the status of an object in the SQL database for future queries
+  #
+  # @param [String] The group_name of the object
+  # @param [Hash] changes, the changes to make in the form of {sql_column_name: value}
+  def update_status(group_name, changes)
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+      obj = MediaObject.find_by(group_name: group_name)
+      obj.update(changes)
+    end
   end
 end
