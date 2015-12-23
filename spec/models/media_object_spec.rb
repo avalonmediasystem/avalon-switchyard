@@ -147,7 +147,14 @@ describe 'creation of media objects' do
       second_object_json = @media_object.object_status_as_json(second_obj[:group_name]).symbolize_keys
       @media_object.update_status(second_obj[:group_name], {group_name: 'junk'})
       @media_object.update_status(first_obj[:group_name], second_object_json.except(:id, :group_name))
-      expect(@media_object.object_status_as_json(first_obj[:group_name]).symbolize_keys.except(:id, :group_name)).to match(second_object_json.except(:id, :group_name)) 
+      expect(@media_object.object_status_as_json(first_obj[:group_name]).symbolize_keys.except(:id, :group_name)).to match(second_object_json.except(:id, :group_name))
+    end
+  end
+
+  describe 'posting an object' do
+    xit 'posts an object' do
+      obj = @media_object.parse_request_body(load_sample_obj)[:json]
+      byebug
     end
   end
 end

@@ -117,20 +117,23 @@ class MediaObject < ActiveRecord::Base
 
   # Transforms the posted object into the json form needed to submit it to an Avalon instance
   #
-  # @param [Hash] source The JSON submitted to the router with its keys symbolized
-  # @return [Hash] the object in the hash needed to submit it to Avalon
-  def transform_object(posted_content)
-    # Step 1, determine where this object is headed and its collection pid
+  # @param [Hash] object The JSON submitted to the router with its keys symbolized
+  # @return [Hash] the object in the json form needed to submit it to Avalon
+  def transform_object(object)
+    byebug
+    files = {}
+    # TODO: Refactor this out into some sub functions and follow DRY regarding the object error call
+
+    target = attempt_to_route(object)
+
+    # Setup the fields needed for the ingestation
+    fields = {}
     begin
-      target = Router.new.select_avalon(posted_content)
-      collection_pid = Collection.new.get_or_create_collection_pid(object, target)
+      fields = get_fields_from_mods(object)
+      fields[:collection_id] = get_object_collection_id(object, target)
     rescue
-      halt
+      object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
-
-
-    #collection_info =
-    #collection_object.create_collection unless collection_object.ex
   end
 
   # Updates the status of an object in the SQL database for future queries
@@ -143,4 +146,82 @@ class MediaObject < ActiveRecord::Base
       obj.update(changes)
     end
   end
+
+  # Writes out an alert that an object failed for some reason and exits the thread
+  #
+  # @param [Hash] object the posted object in json
+  # @param [String] message the error message to write
+  def object_error_and_exit(object, message)
+    update_status(object[:group_name], error: true, message: message, last_modified: Time.now.utc.iso8601)
+    exit
+  end
+
+  # Attempts to route the object to an avalon, logs an error in the db and triggers an exit of the thread if the object cannot be routed
+  #
+  # @param [Hash] object Hash of the object supplied
+  # @return [String] the url of the target avalon
+  def attempt_to_route(object)
+    target = Router.new.select_avalon(posted_content)
+    object_error_and_exit(object, 'could not route to an avalon') if target.nil?
+    target
+  end
+
+  # Determines the pid of a collection for an object, if the pid cannot be determined it logs an error in the db and halts
+  #
+  # @param [Hash] object a hash of the object
+  # @return [String] target the url of the object
+  def get_object_collection_id(object, target)
+    # Find or create the collection
+    collection_pid = Collection.new.get_or_create_collection_pid(object, target)
+    object_error_and_exit(object, 'could not assign to a collection') if collection_pid.nil?
+    collection_pid
+  end
+
+  # Extract the required fields from the mods for creating a collection, if the fields cannot be extracted it logs an error in the db and halts
+  def get_fields_from_mods(object)
+    # Populate the rest if Fields
+    # Make sure the XML can be parsed by having Nokogiri take a pass at it
+    fields = {}
+    hash_mods = {}
+
+    # Check for the default fields we need, we may only have these if a machine generated mods
+    fields[:title] = hash_mods['titleInfo']['title']
+    fields[:creator] = ['MDPI']
+    fields[:date_issued] = hash_mods['originInfo']
+    fields[]
+
+    # Check for a creation date
+    unless hash_mods['recordInfo'].nil?
+      fields[:date_created] = hash_mods['recordInfo']['recordCreationDate']
+    end
+    fields[:date_created] = Time.now.to_s.delete(' ') if fields[:date_created].nil?
+
+    # Get the CatKey if we have one
+    fields[:bibliographic_id] = obj[:metadata]['iucat_barcode']
+
+    fields
+  end
+
+  # Gets the collection name for an object,
+  def get_collection_name(object)
+    begin
+      return parse_mods(object)['identifier'][0]
+    rescue
+      object_error_and_exit(object, 'failed to determine target collection for object')
+    end
+  end
+
+  # Parse the mods in the object as a hash, if this fails it will write an error to the db and end the thread
+  #
+  # @param [Hash] object The media object in its posted json hash
+  # @return [Hash] the mods as a hash with keys as strings
+  def parse_mods(object)
+    begin
+      hash_mods = Hash.from_xml(object[:metadata]['mods'])['mods']
+    rescue
+      object_error_and_exit(object, 'failed to parse mods as XML')
+    end
+    hash_mods
+  end
+
 end
