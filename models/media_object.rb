@@ -202,12 +202,8 @@ class MediaObject < ActiveRecord::Base
       object_error_and_exit(object, 'failed to parse ffprobe data for object') if high_data.nil?
     end
 
-    # Get the type of resource
-    begin
-      file_hash[:file_format] = parse_mods(@object)['typeOfResource'].split.map(&:capitalize).join(' ')
-    rescue
-      object_error_and_exit(object, 'failed to parse file_format from mods')
-    end
+    file_hash[:file_format] = get_file_format(object)
+
     file_hash
   end
 
@@ -313,4 +309,13 @@ class MediaObject < ActiveRecord::Base
     object_error_and_exit(object, 'failed to parse the xml representing the file structure')
   end
 
+  # Gets the file format from the mods, writes an error and terminates if the file format cannot be found
+  #
+  # @param [Hash] the object as passed to Switchyard
+  # @return [String] the file format used for this file
+  def get_file_format(object)
+    return parse_mods(object)['typeOfResource'].split.map(&:capitalize).join(' ')
+  rescue
+    object_error_and_exit(object, 'failed to parse file_format from mods')
+  end
 end

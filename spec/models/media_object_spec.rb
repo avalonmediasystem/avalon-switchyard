@@ -167,15 +167,26 @@ describe 'creation of media objects' do
           @file_info = @object[:parts][0]['files']['1']
         end
         it 'returns the file structure for a file' do
-          expect(@media_object.file_structure_as_xml( Hash.from_xml(@file_info['structure'])['Item']['Span'], @object).class).to eq(Hash)
+          expect(@media_object.file_structure_as_xml(Hash.from_xml(@file_info['structure'])['Item'], @object).class).to eq(String)
         end
 
         it 'writes an error when the file structure cannot be parsed' do
           expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
-          @media_object.file_structure_as_xml({},{})
+          @media_object.file_structure_as_xml({} , {})
         end
       end
 
+      describe 'getting the file formation' do
+        it 'can get the file format' do
+          expect(@media_object.get_file_format(@object).class).to eq(String)
+        end
+
+        it 'writes an error when the file format cannot be retrieved' do
+          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+          expect(@media_object).to receive(:parse_mods).and_return(nil)
+          @media_object.get_file_format(@object)
+        end
+      end
     end
 
     describe 'obtaining field information for an object' do
