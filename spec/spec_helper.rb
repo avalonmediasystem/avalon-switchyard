@@ -29,6 +29,7 @@ require 'api_token'
 require 'media_object'
 require 'router'
 require 'collection'
+require 'objects'
 
 ENV['RACK_ENV'] = 'test'
 
