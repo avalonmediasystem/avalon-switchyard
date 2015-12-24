@@ -154,7 +154,8 @@ describe 'creation of media objects' do
 
   describe 'transforming posting an object' do
     before :all do
-      @object = @media_object.parse_request_body(load_sample_obj)[:json]
+      @registrable = @media_object.parse_request_body(load_sample_obj)
+      @object = @registrable[:json]
     end
 
     describe 'parsing file information for an object' do
@@ -169,7 +170,8 @@ describe 'creation of media objects' do
 
       describe 'getting the file structure' do
         before :all do
-          @media_object.register_object(@object)
+          #byebug
+          @media_object.register_object(@registrable)
           @file_info = @object[:parts][0]['files']['1']
         end
         it 'returns the file structure for a file' do
@@ -296,7 +298,7 @@ describe 'creation of media objects' do
 
     it 'properly forms a post request for an object' do
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
-      stub_request(:post, "https://content.mdpi.iu.edu/media_objects.json").to_return(body: {id: 'pid'}.to_json, status: 200)
+      stub_request(:post, "https://youravalon.edu/media_objects.json").to_return(body: {id: 'pid'}.to_json, status: 200)
       @media_object.post_new_media_object(@object)
       results = @media_object.object_status_as_json(@object[:group_name])
       expect(results['status']).to eq('submitted')
@@ -307,7 +309,7 @@ describe 'creation of media objects' do
 
     it 'writes an error when the post request fails' do
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
-      stub_request(:post, "https://content.mdpi.iu.edu/media_objects.json").to_return(body: {error: 'unh-oh'}.to_json, status: 500)
+      stub_request(:post, "https://youravalon.edu/media_objects.json").to_return(body: {error: 'unh-oh'}.to_json, status: 500)
       expect{@media_object.post_new_media_object(@object)}.to raise_error
     end
   end

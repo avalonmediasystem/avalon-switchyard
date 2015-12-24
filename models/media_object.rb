@@ -101,13 +101,12 @@ class MediaObject < ActiveRecord::Base
   # @return [Hash] results a hash containing the results of the reigstration
   # @return results [Boolean] :success true if successfull, false if not
   # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
-  def register_object(obj)
-    destroy_object(obj[:json][:group_name])
+  def register_object(object)
+    destroy_object(object[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
-    #byebug
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.create(group_name: obj[:json][:group_name], status: 'received', error: false, message: 'object received, awaiting routing', last_modified: t, created: t, locked: false)
-      return { success: true, group_name: obj[:json][:group_name] }
+      MediaObject.create(group_name: object[:json][:group_name], status: 'recieved', error: false, message: 'object received', created: t, last_modified: t, avalon_chosen: '', avalon_pid: '', avalon_url: '', locked: false)
+      return { success: true, group_name: object[:json][:group_name] }
     end
   rescue
     return { success: false }
@@ -121,7 +120,7 @@ class MediaObject < ActiveRecord::Base
   # @return results [String] :group_name the group_name of the object created, only return if deletion was successfull
   def destroy_object(group_name)
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.destroy_all(group_name: group_name)
+      MediaObject.destroy(group_name: group_name)
       return { success: true, group_name: group_name }
     end
   rescue

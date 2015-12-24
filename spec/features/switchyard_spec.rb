@@ -79,10 +79,10 @@ describe 'Switchyard API Functionality' do
           mo = MediaObject.new
           allow(MediaObject).to receive(:new).and_return(mo)
           allow(mo).to receive(:post_new_media_object).and_return('')
+          byebug
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.ok?).to be_truthy
           expect(last_response.status).to eq(200)
-          #byebug
           result = JSON.parse(last_response.body).symbolize_keys
           expect(result[:group_name]).not_to be_nil
           expect(result[:status]).to eq('received')
