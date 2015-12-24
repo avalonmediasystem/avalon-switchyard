@@ -17,7 +17,7 @@ require 'webmock'
 
 describe 'creation of media objects' do
   before :all do
-    @media_object = MediaObject.new
+    @media_object = Objects.new
   end
   describe 'parsing post requests' do
     it 'returns a hash of the request json' do
@@ -77,7 +77,7 @@ describe 'creation of media objects' do
     end
 
     it 'registers an object' do
-      @media_object.destroy_object(@content[:json][:group_name])
+      MediaObject.destroy_all(group_name: @content[:json][:group_name])
       expect(MediaObject.find_by(group_name: @content[:json][:group_name])).to be_nil
       expect(@media_object.register_object(@content)).to be_truthy
       expect(MediaObject.find_by(group_name: @content[:json][:group_name])).not_to be_nil
@@ -90,13 +90,13 @@ describe 'creation of media objects' do
     end
 
     it 'removes a previous entry when an object is retried' do
-      expect(ActiveRecord::Base).to receive(:destroy).exactly(:once)
+      expect(ActiveRecord::Base).to receive(:destroy_all).exactly(:once)
       expect(@media_object.register_object(@content)).to be_truthy
     end
 
     it 'retries destroying an object when there is an error' do
-      allow(ActiveRecord::Base).to receive(:destroy).and_raise(ActiveRecord::ConnectionTimeoutError)
-      expect(ActiveRecord::Base).to receive(:destroy).exactly(Sinatra::Application.settings.max_retries).times
+      allow(ActiveRecord::Base).to receive(:destroy_all).and_raise(ActiveRecord::ConnectionTimeoutError)
+      expect(ActiveRecord::Base).to receive(:destroy_all).exactly(Sinatra::Application.settings.max_retries).times
       expect(@media_object.destroy_object(@content[:json][:group_name])[:success]).to be_falsey
     end
 
@@ -122,7 +122,7 @@ describe 'creation of media objects' do
     end
 
     it 'returns 404 and a message when the object is not found' do
-      @media_object.destroy_object(@object[:group_name])
+      MediaObject.destroy_all(group_name: @object[:group_name])
       expect(@media_object.object_status_as_json(@object[:group_name]).class).to eq(Hash)
       expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to eq(404)
       expect(@media_object.object_status_as_json(@object[:group_name])[:success]).to be_falsey
@@ -161,7 +161,6 @@ describe 'creation of media objects' do
     describe 'parsing file information for an object' do
       it 'can transform the object' do
         allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
-        #byebug
         transform = @media_object.transform_object(@object)
         expect(transform.class).to eq(String)
         expect(JSON.parse(transform)['fields'].class).to eq(Hash)
@@ -170,7 +169,6 @@ describe 'creation of media objects' do
 
       describe 'getting the file structure' do
         before :all do
-          #byebug
           @media_object.register_object(@registrable)
           @file_info = @object[:parts][0]['files']['1']
         end

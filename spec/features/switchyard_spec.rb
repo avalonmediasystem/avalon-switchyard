@@ -20,10 +20,6 @@ describe 'Switchyard API Functionality' do
     @valid_token = ApiToken.new.create_token[:token]
   end
 
-  before :each do
-    MediaObject.destroy_all
-  end
-
   describe 'Status and Configuration Refresh' do
     it 'returns information about the app at /' do
       get '/'
@@ -52,16 +48,16 @@ describe 'Switchyard API Functionality' do
         end
 
         it 'halts with error code 500 if the database cannot be accessed' do
-          mo = MediaObject.new
-          allow(MediaObject).to receive(:new).and_return(mo)
+          mo = Objects.new
+          allow(Objects).to receive(:new).and_return(mo)
           allow(mo).to receive(:register_object).and_return(success: false, error: 404)
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(500)
         end
 
         it 'halts with error code 200 if the object is not found immediately after registration' do
-          mo = MediaObject.new
-          allow(MediaObject).to receive(:new).and_return(mo)
+          mo = Objects.new
+          allow(Objects).to receive(:new).and_return(mo)
           allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 404)
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(200)
@@ -72,19 +68,19 @@ describe 'Switchyard API Functionality' do
         end
 
         it 'halts with error code 500 if the database times out while trying to get the object' do
-          mo = MediaObject.new
-          allow(MediaObject).to receive(:new).and_return(mo)
+          mo = Objects.new
+          allow(Objects).to receive(:new).and_return(mo)
           allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 500)
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(500)
         end
 
         it 'posts a valid request and displays the result as json' do
-          mo = MediaObject.new
-          allow(MediaObject).to receive(:new).and_return(mo)
+          mo = Objects.new
+          allow(Objects).to receive(:new).and_return(mo)
           allow(mo).to receive(:post_new_media_object).and_return('')
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
-          byebug
+          #byebug
           expect(last_response.ok?).to be_truthy
           expect(last_response.status).to eq(200)
           result = JSON.parse(last_response.body).symbolize_keys
@@ -98,13 +94,13 @@ describe 'Switchyard API Functionality' do
   end
   describe 'queryinng for object status' do
     before :all do
-      mo = MediaObject.new
+      mo = Objects.new
       @inserted_object = mo.parse_request_body(load_sample_obj)
       mo.register_object(@inserted_object)
     end
 
     it 'requires authorization to get get' do
-      get "/media_objects/status/whatever"
+      get '/media_objects/status/whatever'
       expect(last_response.ok?).to be_falsey
       expect(last_response.status).to eq(401)
     end
@@ -125,8 +121,8 @@ describe 'Switchyard API Functionality' do
     end
 
     it 'returns 500 if the database is unavailable' do
-      mo = MediaObject.new
-      allow(MediaObject).to receive(:new).and_return(mo)
+      mo = Objects.new
+      allow(Objects).to receive(:new).and_return(mo)
       allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 500)
       get "/media_objects/status/#{@inserted_object[:json][:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
       expect(last_response.ok?).to be_falsey

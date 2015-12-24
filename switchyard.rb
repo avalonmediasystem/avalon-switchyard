@@ -21,7 +21,7 @@ require 'json'
 require 'logger'
 require 'switchyard_configuration'
 require 'api_token'
-require 'media_object'
+require 'objects'
 require 'router'
 require 'collection'
 require 'sinatra/activerecord'
@@ -78,7 +78,7 @@ end
 post '/media_objects/create' do
   content_type :json
   protected!
-  media_object = MediaObject.new
+  media_object = Objects.new
   # Parse the request and throw a 400 code if bad data was posted in
   object = media_object.parse_request_body(request.body.read)
   halt 400, { status: '400', error: true, message: object[:status][:error] }.to_json unless object[:status][:valid] # halt if the provided data is incorrect
@@ -93,14 +93,15 @@ post '/media_objects/create' do
   end
   stream do |out|
     out << status.to_json # return the initial status so MDPI has some response and then keep working
+    # media_object.post_new_media_object(object)
   end
-  #media_object.post_new_media_object(object)
+
 end
 
 get '/media_objects/status/:group_name' do
   content_type :json
   protected!
-  media_object = MediaObject.new
+  media_object = Objects.new
   status = media_object.object_status_as_json(params[:group_name])
   unless status[:success]
     database_connection_failure! if status[:error] == 500
