@@ -87,15 +87,15 @@ post '/media_objects/create' do
   database_connection_failure! unless registeration_results[:success]
 
   # Display the object as it is currently entered into the database
-  status = media_object.object_status_as_json(registeration_results[:group_name])
+  status = media_object.object_status_as_json(registeration_results['group_name'])
   unless status[:success]
     database_connection_failure! if status[:error] == 500
     record_not_found! if status[:error] == 404
   end
   stream do |out|
     out << status.to_json # return the initial status so MDPI has some response and then keep working
-    # media_object.transform_object(object[:json])
   end
+  media_object.post_new_media_object(object)
 end
 
 get '/media_objects/status/:group_name' do

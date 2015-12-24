@@ -16,6 +16,7 @@ require 'sinatra/activerecord'
 require 'json'
 require 'retries'
 require 'nokogiri'
+require 'restclient'
 
 # Class for creating and working with media objects
 class MediaObject < ActiveRecord::Base
@@ -26,9 +27,7 @@ class MediaObject < ActiveRecord::Base
   def post_new_media_object(object)
     routing_target = attempt_to_route(object)
     payload = transform_object(object)
-
-    post_path = target[:url] + '/media_objects.json'
-
+    post_path = routing_target[:url] + '/media_objects.json'
     resp = ''
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:token]}
@@ -38,9 +37,9 @@ class MediaObject < ActiveRecord::Base
     update_info = { status: 'submitted',
                     error: false,
                     last_modified: Time.now.utc.iso8601.to_s,
-                    avalon_chosen: target[:url],
+                    avalon_chosen: routing_target[:url],
                     avalon_pid: pid,
-                    avalon_url: "#{target[:url]}/#{pid}",
+                    avalon_url: "#{routing_target[:url]}/#{pid}",
                     message: 'successfully submitted' }
     update_status(object[:group_name], update_info)
   end
@@ -150,7 +149,7 @@ class MediaObject < ActiveRecord::Base
     fields = {}
     begin
       fields = get_fields_from_mods(object)
-      fields[:collection_id] = get_object_collection_id(object, target)
+      fields[:collection_id] = get_object_collection_id(object, attempt_to_route(object))
     rescue
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
@@ -247,7 +246,7 @@ class MediaObject < ActiveRecord::Base
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
     update_status(object[:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
-    exit
+    fail "error with #{object[:group_name]}, see database record"
   end
 
   # Attempts to route the object to an avalon, logs an error in the db and triggers an exit of the thread if the object cannot be routed

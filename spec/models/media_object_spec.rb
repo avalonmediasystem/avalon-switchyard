@@ -13,6 +13,7 @@
 # ---  END LICENSE_HEADER BLOCK  ---
 
 require 'spec_helper'
+require 'webmock'
 
 describe 'creation of media objects' do
   before :all do
@@ -159,9 +160,9 @@ describe 'creation of media objects' do
     describe 'parsing file information for an object' do
       it 'can transform the object' do
         allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+        #byebug
         transform = @media_object.transform_object(@object)
         expect(transform.class).to eq(String)
-        expect(JSON.parse(transform).keys).to match(['fields','files'])
         expect(JSON.parse(transform)['fields'].class).to eq(Hash)
         expect(JSON.parse(transform)['files'].class).to eq(Array)
       end
@@ -282,7 +283,32 @@ describe 'creation of media objects' do
       @media_object.destroy_object(content[:json][:group_name])
       @media_object.register_object(content)
       expect(@media_object.object_status_as_json(content[:json][:group_name])['error']).to be_falsey
-      @media_object.object_error_and_exit(content[:json], 'test error')
+      expect{@media_object.object_error_and_exit(content[:json], 'test error')}.to raise_error
+    end
+  end
+
+  describe 'posting media objects' do
+    before :all do
+      o = @media_object.parse_request_body(load_sample_obj(filename: @fixture))
+      @media_object.register_object(o)
+      @object = o[:json]
+    end
+
+    it 'properly forms a post request for an object' do
+      allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+      stub_request(:post, "https://content.mdpi.iu.edu/media_objects.json").to_return(body: {id: 'pid'}.to_json, status: 200)
+      @media_object.post_new_media_object(@object)
+      results = @media_object.object_status_as_json(@object[:group_name])
+      expect(results['status']).to eq('submitted')
+      expect(results['error']).to be_falsey
+      expect(results['avalon_pid']).to eq('pid')
+      expect(results['avalon_chosen']).to eq(Router.new.select_avalon(@object)[:url])
+    end
+
+    it 'writes an error when the post request fails' do
+      allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+      stub_request(:post, "https://content.mdpi.iu.edu/media_objects.json").to_return(body: {error: 'unh-oh'}.to_json, status: 500)
+      expect{@media_object.post_new_media_object(@object)}.to raise_error
     end
   end
 end

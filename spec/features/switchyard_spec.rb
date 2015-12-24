@@ -16,6 +16,10 @@ require 'spec_helper'
 require 'json'
 
 describe 'Switchyard API Functionality' do
+  before :all do
+    @valid_token = ApiToken.new.create_token[:token]
+  end
+
   describe 'Status and Configuration Refresh' do
     it 'returns information about the app at /' do
       get '/'
@@ -24,9 +28,6 @@ describe 'Switchyard API Functionality' do
     end
   end
   describe 'Creating Media Objects' do
-    before :all do
-      @valid_token = ApiToken.new.create_token[:token]
-    end
 
     describe 'authorization' do
       it 'requires authorization to create a media object' do
@@ -75,6 +76,9 @@ describe 'Switchyard API Functionality' do
         end
 
         it 'posts a valid request and displays the result as json' do
+          mo = MediaObject.new
+          allow(MediaObject).to receive(:new).and_return(mo)
+          allow(mo).to receive(:post_new_media_object).and_return('')
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.ok?).to be_truthy
           expect(last_response.status).to eq(200)
@@ -89,23 +93,21 @@ describe 'Switchyard API Functionality' do
   end
   describe 'queryinng for object status' do
     before :all do
-      @valid_token = ApiToken.new.create_token[:token]
-      post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
-      @inserted_object = JSON.parse(last_response.body).symbolize_keys
+      mo = MediaObject.new
+      @inserted_object = mo.parse_request_body(load_sample_obj)
+      mo.register_object(@inserted_object)
     end
 
     it 'requires authorization to get get' do
-      get "/media_objects/status/#{@inserted_object[:group_name]}"
+      get "/media_objects/status/whatever"
       expect(last_response.ok?).to be_falsey
       expect(last_response.status).to eq(401)
     end
 
     it 'displays the status of the object' do
-      get "/media_objects/status/#{@inserted_object[:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
+      get "/media_objects/status/#{@inserted_object[:json][:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
       response = JSON.parse(last_response.body).symbolize_keys
-      @inserted_object.keys.each do |key|
-        expect(response[key]).to match(@inserted_object[key])
-      end
+      expect(response.keys.size).to eq(11)
     end
 
     it 'returns 200 if the object is not found' do
@@ -121,7 +123,7 @@ describe 'Switchyard API Functionality' do
       mo = MediaObject.new
       allow(MediaObject).to receive(:new).and_return(mo)
       allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 500)
-      get "/media_objects/status/#{@inserted_object[:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
+      get "/media_objects/status/#{@inserted_object[:json][:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
       expect(last_response.ok?).to be_falsey
       expect(last_response.status).to eq(500)
     end
