@@ -216,7 +216,11 @@ class MediaObject < ActiveRecord::Base
       file_hash[:duration] = ffprobe_data['format']['duration']
       file_hash[:poster_offset] = '0:01'
       file_hash[:thumbnail_offset] = '0:01'
-      file_hash[:date_ingested] = Time.strptime(file['ingest'].split(' ')[0], "%m/%d/%Y").to_s.split(' ')[0]
+      begin
+        file_hash[:date_ingested] = Time.strptime(file['ingest'].split(' ')[0], "%m/%d/%Y").to_s.split(' ')[0]
+      rescue
+        file_hash[:date_ingested] = Time.strptime(Time.now, "%m/%d/%Y").to_s.split(' ')[0]
+      end
       file_hash[:display_aspect_ratio] = 'placeholder' # TODO: some ffprobes seem to have this, some don't, it is not consistent
       file_hash[:checksum] = 'placeholder'
       file_hash[:original_frame_size] = 'placeholder'
