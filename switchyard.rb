@@ -93,7 +93,7 @@ post '/media_objects/create' do
   end
   stream do |out|
     out << status.to_json # return the initial status so MDPI has some response and then keep working
-    # media_object.post_new_media_object(object)
+    media_object.post_new_media_object(object)
   end
 
 end
