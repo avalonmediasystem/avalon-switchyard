@@ -4,7 +4,7 @@ class MediaObjects < ActiveRecord::Migration
       t.string :group_name
       t.string :status
       t.boolean :error
-      t.string :error_message
+      t.string :message
       t.string :created
       t.string :last_modified
       t.string :avalon_chosen

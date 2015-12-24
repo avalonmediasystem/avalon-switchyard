@@ -12,33 +12,13 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-ruby '2.1.7'
-source 'https://rubygems.org'
 
-# :default group gems
-gem 'retries'
-gem 'sinatra'
-gem 'sinatra-activerecord'
-gem 'rake'
-gem 'coveralls', require: false
 
-group :development do
-  gem 'byebug'
-  gem 'capistrano', '>3.1.2'
-  gem 'capistrano-bundler'
-  gem 'highline'
-end
-
-group :test do
-  gem 'capybara'
-  gem 'rspec'
-  gem 'webmock'
-end
-
-group :development, :test do
-  gem 'sqlite3'
-end
-
-group :production do
-  gem 'mysql2'
+describe 'selecting the avalon target' do
+  it 'always selects the default avalon' do
+    avalon_selected = Router.new.select_avalon('foo')
+    expect(avalon_selected.class).to eq(Hash)
+    expect(avalon_selected[:url]).not_to be_nil
+    expect(avalon_selected[:api_token]).not_to be_nil
+  end
 end

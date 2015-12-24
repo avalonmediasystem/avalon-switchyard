@@ -12,33 +12,19 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-ruby '2.1.7'
-source 'https://rubygems.org'
+require 'switchyard_configuration'
+require 'retries'
+require 'restclient'
 
-# :default group gems
-gem 'retries'
-gem 'sinatra'
-gem 'sinatra-activerecord'
-gem 'rake'
-gem 'coveralls', require: false
-
-group :development do
-  gem 'byebug'
-  gem 'capistrano', '>3.1.2'
-  gem 'capistrano-bundler'
-  gem 'highline'
-end
-
-group :test do
-  gem 'capybara'
-  gem 'rspec'
-  gem 'webmock'
-end
-
-group :development, :test do
-  gem 'sqlite3'
-end
-
-group :production do
-  gem 'mysql2'
+# Stub class for routing content to Avalon, always picks the default currently
+class Router
+  # Selects the avalon to route the posted content to
+  #
+  # @param [Hash] the object posted to router as JSON with keys symbolized
+  # @return [Hash] the Avalon selected with the keys :url and :api_token
+  def select_avalon(object)
+    # When it comes time to actually implement this, the Media Object function get_collection_name(object) will return the collection of an object
+    # For now thought, default it is:
+    SwitchyardConfiguration.new.load_yaml('avalons.yml')['default'].symbolize_keys
+  end
 end
