@@ -79,6 +79,7 @@ post '/media_objects/create' do
   content_type :json
   protected!
   media_object = MediaObject.new
+  #byebug
 
   # Parse the request and throw a 400 code if bad data was posted in
   object = media_object.parse_request_body(request.body.read)
@@ -87,7 +88,7 @@ post '/media_objects/create' do
   database_connection_failure! unless registeration_results[:success]
 
   # Display the object as it is currently entered into the database
-  status = media_object.object_status_as_json(registeration_results['group_name'])
+  status = media_object.object_status_as_json(registeration_results[:group_name])
   unless status[:success]
     database_connection_failure! if status[:error] == 500
     record_not_found! if status[:error] == 404

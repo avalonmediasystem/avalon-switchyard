@@ -17,6 +17,7 @@ require 'json'
 require 'retries'
 require 'nokogiri'
 require 'restclient'
+require 'date'
 
 # Class for creating and working with media objects
 class MediaObject < ActiveRecord::Base
@@ -103,8 +104,9 @@ class MediaObject < ActiveRecord::Base
   def register_object(obj)
     destroy_object(obj[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
+    #byebug
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.create(group_name: obj[:json][:group_name], status: 'received', error: false, message: 'object rceived, awaiting routing', last_modified: t, created: t, locked: false)
+      MediaObject.create(group_name: obj[:json][:group_name], status: 'received', error: false, message: 'object received, awaiting routing', last_modified: t, created: t, locked: false)
       return { success: true, group_name: obj[:json][:group_name] }
     end
   rescue
@@ -217,9 +219,11 @@ class MediaObject < ActiveRecord::Base
       file_hash[:poster_offset] = '0:01'
       file_hash[:thumbnail_offset] = '0:01'
       begin
-        file_hash[:date_ingested] = Time.strptime(file['ingest'].split(' ')[0], "%m/%d/%Y").to_s.split(' ')[0]
+        date = file['ingest'].split(' ')[0]
+        date_split = date.split('/')
+        file_hash[:date_ingested] = "#{date_split[2]}-#{date_split[0]}-#{date_split[1]}"
       rescue
-        file_hash[:date_ingested] = Time.strptime(Time.now, "%m/%d/%Y").to_s.split(' ')[0]
+        file_hash[:date_ingested] = Time.now.split(' ')[0]
       end
       file_hash[:display_aspect_ratio] = 'placeholder' # TODO: some ffprobes seem to have this, some don't, it is not consistent
       file_hash[:checksum] = 'placeholder'
