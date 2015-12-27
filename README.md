@@ -77,7 +77,7 @@ All media_objects functions respond in the same manner.  Their responses are:
   - Response Body: 'Not authorized'
 * Internal Server Error
   - HTTP Code: 500
-  - Response Body: json in the form of: `{error: true, error_message: STRING}`
+  - Response Body: json in the form of: `{error: true, message: STRING}`
   - Response Body may also be the generic Sinatra 500 page if an unhandled error occurred
 * Successful Action
   - HTTP Code: 200
@@ -98,10 +98,10 @@ All media_objects functions respond in the same manner.  Their responses are:
 * Invalid Data Posted for Creation
   - This applies only to `post /media_objects/create, content, api_token: token`
   - HTTP Code: 400
-  - Response Body: json in the form of `{ status: '400', error: true, error_message: STRING}`
+  - Response Body: json in the form of `{ status: '400', error: true, message: STRING}`
 * Resource Not Found
   - This applies only to `get /media_objects/status/:group_name`
   - HTTP Code: 404
-  - Response Body: json in the form of `{error: true, error_message: 'Record not found'}`
+  - Response Body: json in the form of `{error: true, message: 'Record not found'}`
 
 For further information routes see `switchyard.rb` and for media_object values see `models/media_object.rb`
