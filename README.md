@@ -40,7 +40,7 @@ TODO, IU folks see internal wiki
 Any JSON posted to Avalon Switchyard must be accompanied by a valid API Token in the header.
 
 * _create an API Token_: run `RACK_ENV=ENV bundle exec rake tokens:create_token ` from the root dir of Avalon Switchyard
-* _deauthorize an API Token_: run `RACK_ENV=ENV bundle exec rake tokens:decomission_token['token']` from the door dir of Avalon Switchyard
+* _deauthorize an API Token_: run `RACK_ENV=ENV bundle exec rake tokens:decomission_token['token']` from the root dir of Avalon Switchyard
 
 For additional documentation see the `Rakefile` and the `api_token.rb` model.
 
