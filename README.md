@@ -104,4 +104,4 @@ All media_objects functions respond in the same manner.  Their responses are:
   - HTTP Code: 404
   - Response Body: json in the form of `{error: true, message: 'Record not found'}`
 
-For further information routes see `switchyard.rb` and for media_object values see `models/media_object.rb`
+For further information routes see `switchyard.rb` and for media_object values see `lib/objects.rb`
