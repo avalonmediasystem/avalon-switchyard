@@ -15,7 +15,7 @@
 require 'sinatra/activerecord'
 require 'json'
 require 'retries'
-require 'nokogiri'
+#require 'nokogiri'
 require 'restclient'
 require 'date'
 
