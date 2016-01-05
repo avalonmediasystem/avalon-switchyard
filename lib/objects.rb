@@ -31,7 +31,7 @@ class Objects
     post_path = routing_target[:url] + '/media_objects.json'
     resp = ''
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:token]}
+      resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
@@ -108,7 +108,7 @@ class Objects
       MediaObject.create(group_name: object[:json][:group_name], status: 'received', error: false, message: 'object received', created: t, last_modified: t, avalon_chosen: '', avalon_pid: '', avalon_url: '', locked: false)
       return { success: true, group_name: object[:json][:group_name] }
     end
-  rescue
+  rescue Exception => e
     return { success: false }
   end
 
@@ -150,14 +150,15 @@ class Objects
     fields = {}
     begin
       fields = get_fields_from_mods(object)
-      fields[:collection_id] = get_object_collection_id(object, attempt_to_route(object))
-    rescue
+    rescue Exception => e
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
 
     files = get_all_file_info(object)
-    final = { fields: fields, files: files }
-    final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
+    collection_id = get_object_collection_id(object, attempt_to_route(object))
+    final = { fields: fields, files: files, collection_id: collection_id }
+#FIXME!!!!
+    #final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
     return final.to_json
   end
 
@@ -215,8 +216,8 @@ class Objects
     begin
       file_hash[:file_size] = ffprobe_data['format']['size']
       file_hash[:duration] = ffprobe_data['format']['duration']
-      file_hash[:poster_offset] = '0:01'
-      file_hash[:thumbnail_offset] = '0:01'
+#      file_hash[:poster_offset] = '0:01'
+#      file_hash[:thumbnail_offset] = '0:01'
       begin
         date = file['ingest'].split(' ')[0]
         date_split = date.split('/')
@@ -225,7 +226,7 @@ class Objects
         file_hash[:date_ingested] = Time.now.split(' ')[0]
       end
       file_hash[:display_aspect_ratio] = 'placeholder' # TODO: some ffprobes seem to have this, some don't, it is not consistent
-      file_hash[:checksum] = 'placeholder'
+      file_hash[:file_checksum] = 'placeholder'
       file_hash[:original_frame_size] = 'placeholder'
     rescue
       object_error_and_exit(object, 'failed to parse ffprobe data for object')
@@ -290,7 +291,7 @@ class Objects
     # Check for the default fields we need, we may only have these if a machine generated mods
     fields[:title] = hash_mods['titleInfo']['title'] || 'Untitled'
     fields[:creator] = ['MDPI']
-    fields[:date_issued] = hash_mods['originInfo'] || '19uu'
+    fields[:date_issued] = hash_mods['originInfo']['dateIssued'] || '19uu'
 
     # Check for a creation date
     unless hash_mods['recordInfo'].nil?

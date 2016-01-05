@@ -52,7 +52,8 @@ class Collection < ActiveRecord::Base
   # @param [Hash] routing_target the Avalon information loaded by Router
   # @return [String] the pid of the collection
   def get_or_create_collection_pid(object, routing_target)
-    info = collection_information(object[:json][:metadata]['unit'], routing_target[:url])
+    name = object[:json][:metadata]['unit']
+    info = collection_information(name, routing_target[:url])
     unless info[:exists]
       # TODO: Make this smarter for how it selects managers and names the collection_object
       # Currently name is used for both unit and collection name and default managers are always loaded (via passing nil)
@@ -86,7 +87,7 @@ class Collection < ActiveRecord::Base
     post_path = routing_target[:url] + '/admin/collections'
     resp = ''
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:token]}
+      resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     result = JSON.parse(resp.body).symbolize_keys
     fail "recieved an error #{result[:error]} when attempting to create collection #{payload} in Avalon #{@post_path}" unless result[:error].nil?
