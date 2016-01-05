@@ -24,6 +24,7 @@ require 'api_token'
 require 'objects'
 require 'router'
 require 'collection'
+require 'media_object'
 require 'sinatra/activerecord'
 require 'byebug' if settings.development?
 
