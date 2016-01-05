@@ -75,7 +75,7 @@ describe 'collection management' do
     it 'calls post collection if a collection does not exist' do
       allow(@collection).to receive(:collection_information).and_return({exists: false}, {exists: true, pid: 'foo'})
       expect(@collection).to receive(:post_new_collection).at_least(:once).and_return('foo')
-      expect(@collection.get_or_create_collection_pid({stub: 'object', metadata: {'unit'=>'foo'}}, url: 'http://somewhere.edu')).to eq('foo')
+      expect(@collection.get_or_create_collection_pid({stub: 'object', json: { metadata: {'unit'=>'foo'}}}, url: 'http://somewhere.edu')).to eq('foo')
     end
   end
 end

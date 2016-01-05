@@ -155,7 +155,7 @@ describe 'creation of media objects' do
   describe 'transforming posting an object' do
     before :all do
       @registrable = @media_object.parse_request_body(load_sample_obj)
-      @object = @registrable[:json]
+      @object = @registrable
     end
 
     describe 'parsing file information for an object' do
@@ -170,7 +170,7 @@ describe 'creation of media objects' do
       describe 'getting the file structure' do
         before :all do
           @media_object.register_object(@registrable)
-          @file_info = @object[:parts][0]['files']['1']
+          @file_info = @object[:json][:parts][0]['files']['1']
         end
         it 'returns the file structure for a file' do
           expect(@media_object.file_structure_as_xml(Hash.from_xml(@file_info['structure'])['Item'], @object).class).to eq(String)
@@ -289,16 +289,15 @@ describe 'creation of media objects' do
 
   describe 'posting media objects' do
     before :all do
-      o = @media_object.parse_request_body(load_sample_obj(filename: @fixture))
-      @media_object.register_object(o)
-      @object = o[:json]
+      @object = @media_object.parse_request_body(load_sample_obj(filename: @fixture))
+      @media_object.register_object(@object)
     end
 
     it 'properly forms a post request for an object' do
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
       stub_request(:post, "https://youravalon.edu/media_objects.json").to_return(body: {id: 'pid'}.to_json, status: 200)
       @media_object.post_new_media_object(@object)
-      results = @media_object.object_status_as_json(@object[:group_name])
+      results = @media_object.object_status_as_json(@object[:json][:group_name])
       expect(results['status']).to eq('submitted')
       expect(results['error']).to be_falsey
       expect(results['avalon_pid']).to eq('pid')
