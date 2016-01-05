@@ -42,7 +42,7 @@ class Objects
                     avalon_pid: pid,
                     avalon_url: "#{routing_target[:url]}/#{pid}",
                     message: 'successfully submitted' }
-    update_status(object[:group_name], update_info)
+    update_status(object[:json][:group_name], update_info)
   end
 
   # Takes the information posts to the API in the request body and parses it
@@ -168,7 +168,7 @@ class Objects
   def get_all_file_info(object)
     return_array = []
     # Loop over every part
-    object[:parts].each do |part|
+    object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
         return_array << get_file_info(object, part['files'][key])
@@ -252,8 +252,8 @@ class Objects
   # @param [Hash] object the posted object in json
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
-    update_status(object[:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
-    fail "error with #{object[:group_name]}, see database record"
+    update_status(object[:json][:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
+    fail "error with #{object[:json][:group_name]}, see database record"
   end
 
   # Attempts to route the object to an avalon, logs an error in the db and triggers an exit of the thread if the object cannot be routed
@@ -299,7 +299,7 @@ class Objects
     fields[:date_created] = Time.now.to_s.delete(' ') if fields[:date_created].nil?
 
     # Get the CatKey if we have one
-    fields[:bibliographic_id] = object[:metadata]['iucat_barcode']
+    fields[:bibliographic_id] = object[:json][:metadata]['iucat_barcode']
 
     fields
   end
@@ -319,7 +319,7 @@ class Objects
   # @return [Hash] the mods as a hash with keys as strings
   def parse_mods(object)
     begin
-      hash_mods = Hash.from_xml(object[:metadata]['mods'])['mods']
+      hash_mods = Hash.from_xml(object[:json][:metadata]['mods'])['mods']
     rescue
       object_error_and_exit(object, 'failed to parse mods as XML')
     end

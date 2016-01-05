@@ -52,7 +52,7 @@ class Collection < ActiveRecord::Base
   # @param [Hash] routing_target the Avalon information loaded by Router
   # @return [String] the pid of the collection
   def get_or_create_collection_pid(object, routing_target)
-    info = collection_information(object[:metadata]['unit'], routing_target[:url])
+    info = collection_information(object[:json][:metadata]['unit'], routing_target[:url])
     unless info[:exists]
       # TODO: Make this smarter for how it selects managers and names the collection_object
       # Currently name is used for both unit and collection name and default managers are always loaded (via passing nil)
@@ -77,7 +77,7 @@ class Collection < ActiveRecord::Base
   # @param [Hash] routing_target A hash of the Avalon information as loaded by managers
   # @return [String] the pid of the collection created
   def post_new_collection(name, unit, managers, routing_target)
-    managers = routing_target[default_managers] if managers.nil?
+    managers = routing_target[:default_managers] if managers.nil?
     payload = {name: name,
                description: "Avalon Switchyard Created Collection for #{unit}",
                unit: unit,
