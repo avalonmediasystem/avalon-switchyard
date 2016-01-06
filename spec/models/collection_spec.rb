@@ -60,7 +60,7 @@ describe 'collection management' do
         with(:body => {"admin_collection"=>{"name"=>"test", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"test", "managers"=>["test1@example.edu", "test2@example.edu"]}},
              :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'239', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
         to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
-      @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})
+      @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', api_token: 'foo'})
     end
 
     it 'forms a post request properly' do
@@ -69,7 +69,7 @@ describe 'collection management' do
              :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'239', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
         to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
 
-      expect(@collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', token: 'foo'})).to eq('pid')
+      expect(@collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', api_token: 'foo'})).to eq('pid')
     end
 
     it 'calls post collection if a collection does not exist' do

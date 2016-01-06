@@ -83,11 +83,11 @@ post '/media_objects/create' do
   # Parse the request and throw a 400 code if bad data was posted in
   object = media_object.parse_request_body(request.body.read)
   halt 400, { status: '400', error: true, message: object[:status][:error] }.to_json unless object[:status][:valid] # halt if the provided data is incorrect
-  registeration_results = media_object.register_object(object)
-  database_connection_failure! unless registeration_results[:success]
+  registration_results = media_object.register_object(object)
+  database_connection_failure! unless registration_results[:success]
 
   # Display the object as it is currently entered into the database
-  status = media_object.object_status_as_json(registeration_results[:group_name])
+  status = media_object.object_status_as_json(registration_results[:group_name])
   unless status[:success]
     database_connection_failure! if status[:error] == 500
     record_not_found! if status[:error] == 404
