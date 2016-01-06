@@ -158,7 +158,7 @@ class Objects
     collection_id = get_object_collection_id(object, attempt_to_route(object))
     final = { fields: fields, files: files, collection_id: collection_id }
 #FIXME!!!!
-    #final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
+    final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
     return final.to_json
   end
 
