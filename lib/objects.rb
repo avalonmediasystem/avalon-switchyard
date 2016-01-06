@@ -15,7 +15,7 @@
 require 'sinatra/activerecord'
 require 'json'
 require 'retries'
-#require 'nokogiri'
+require 'nokogiri'
 require 'restclient'
 require 'date'
 
@@ -190,7 +190,7 @@ class Objects
     begin
       file_info = Hash.from_xml(file['structure'])['Item']
     rescue
-      object_error_and_exit(object, "failed to xml describing the object's files information as xml")
+      object_error_and_exit(object, "failed to parse item xml")
     end
 
     # Setup the defaults
@@ -206,33 +206,57 @@ class Objects
     s = file_structure_as_xml(file_info, object)
     file_hash[:structure] = s unless s.nil?
 
-    # Get the rest of the file info
-    # TODO: For now we are only supporting the high derivative
-    high_data = file['q']['high']
-    object_error_and_exit(object, 'failed to find high quality deriviative for object') if high_data.nil?
-    ffprobe_data = Hash.from_xml(high_data['ffprobe'])['ffprobe']
-
-    file_hash[:file_location] = high_data['url']
-    begin
-      file_hash[:file_size] = ffprobe_data['format']['size']
-      file_hash[:duration] = ffprobe_data['format']['duration']
-#      file_hash[:poster_offset] = '0:01'
-#      file_hash[:thumbnail_offset] = '0:01'
+    # Get the rest of the info for derivatives. Use highest quality derivative available for item-level values
+    file_hash[:files] = []
+    quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
+    ['low','med','high'].each do |quality| 
+      derivative = file['q'][quality] or next
       begin
-        date = file['ingest'].split(' ')[0]
-        date_split = date.split('/')
-        file_hash[:date_ingested] = "#{date_split[2]}-#{date_split[0]}-#{date_split[1]}"
+        ffprobe_xml = Nokogiri::XML(derivative['ffprobe'])
+        audio_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'audio\'][disposition/@default=\'1\']').first
+        audio_stream ||= ffprobe_xml.xpath('//stream[@codec_type=\'audio\']').first || {}
+        video_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'vidio\'][disposition/@default=\'1\']').first
+        video_stream ||= ffprobe_xml.xpath('//stream[@codec_type=\'vidio\']').first || {}
+        format = ffprobe_xml.xpath('//format').first
+        derivative_hash = {label: quality_map[quality]}
+        derivative_hash[:id] = derivative['filename']
+        derivative_hash[:url] = derivative['url']
+        derivative_hash[:duration] = format['duration']
+        derivative_hash[:mime_type] = MIME::Types.type_for(derivative['filename']).first.content_type
+        derivative_hash[:audio_bitrate] = audio_stream['bit_rate']
+        derivative_hash[:audio_codec] = audio_stream['codec_name']
+        derivative_hash[:video_bitrate] = video_stream['bit_rate']
+        derivative_hash[:video_codec] = video_stream['codec_name']
+        derivative_hash[:width] = video_stream['width']
+        derivative_hash[:height] = video_stream['height']
+        file_hash[:files] << derivative_hash
       rescue
-        file_hash[:date_ingested] = Time.now.split(' ')[0]
+        object_error_and_exit(object, 'failed to parse ffprobe data for derivative(s)')
       end
-      file_hash[:display_aspect_ratio] = 'placeholder' # TODO: some ffprobes seem to have this, some don't, it is not consistent
-      file_hash[:file_checksum] = 'placeholder'
-      file_hash[:original_frame_size] = 'placeholder'
-    rescue
-      object_error_and_exit(object, 'failed to parse ffprobe data for object')
-    end
 
-    file_hash[:file_format] = get_file_format(object)
+      file_hash[:file_location] = derivative_hash['url']
+      begin
+        file_hash[:file_size] = format['size']
+        file_hash[:duration] = format['duration']
+        #      file_hash[:poster_offset] = '0:01'
+        #      file_hash[:thumbnail_offset] = '0:01'
+        begin
+          date = file['ingest'].split(' ')[0]
+          date_split = date.split('/')
+          file_hash[:date_ingested] = "#{date_split[2]}-#{date_split[0]}-#{date_split[1]}"
+        rescue
+          file_hash[:date_ingested] = Time.now.split(' ')[0]
+        end
+        file_hash[:display_aspect_ratio] = video_stream['display_aspect_ratio']
+        file_hash[:file_checksum] = 'placeholder'
+        file_hash[:original_frame_size] = 'placeholder'
+      rescue
+        object_error_and_exit(object, 'failed to parse ffprobe data for object')
+      end
+
+      file_hash[:file_format] = get_file_format(object)
+
+    end
 
     file_hash
   end
