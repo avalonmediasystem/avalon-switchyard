@@ -21,6 +21,7 @@ gem 'sinatra'
 gem 'sinatra-activerecord'
 gem 'rake'
 gem 'coveralls', require: false
+gem 'nokogiri'
 
 group :development do
   gem 'byebug'
