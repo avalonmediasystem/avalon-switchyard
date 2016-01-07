@@ -172,7 +172,7 @@ class Objects
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key])
+        return_array << get_file_info(object, part['files'][key]).merge({other_identifier: part['mdpi_barcode']})
       end
     end
     return_array
@@ -324,7 +324,9 @@ class Objects
     fields[:date_created] = Time.now.to_s.delete(' ') if fields[:date_created].nil?
 
     # Get the CatKey if we have one
-    fields[:bibliographic_id] = object[:json][:metadata]['iucat_barcode']
+    fields[:bibliographic_id] = object[:json][:metadata]['catalog_key'] unless object[:json][:metadata]['catalog_key'].nil?
+    fields[:other_identifier] = [object[:json][:group_name]]
+    fields[:other_identifier_type] = ['mdpi group']
 
     fields
   end
