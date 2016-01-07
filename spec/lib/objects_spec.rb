@@ -180,26 +180,34 @@ describe 'creation of media objects' do
           expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
           @media_object.file_structure_as_xml({} , {})
         end
+      end
 
-        describe 'parsing file info' do
-          it 'can parse info for one file in an object' do
-            expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
-          end
-
-          # Turn this back on once file parsing has been finalized
-          xit 'writes an error when the file cannot be parsed' do
-            expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
-            @media_object.get_file_info(@object, @file_info)
-          end
-
-          describe do
-            it 'can parse all files in an object' do
-              parse = @media_object.get_all_file_info(@object)
-              expect(parse.class).to eq(Array)
-              expect(parse[0].class).to eq(Hash)
-            end
-          end
+      describe 'parsing file info' do
+        before :all do
+          @media_object.register_object(@registrable)
+          @file_info = @object[:json][:parts][0]['files']['1']
         end
+	it 'can parse info for one file in an object' do
+	  expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
+	end
+
+	# Turn this back on once file parsing has been finalized
+	xit 'writes an error when the file cannot be parsed' do
+	  expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+	  @media_object.get_file_info(@object, @file_info)
+	end
+
+	describe do
+          let(:parse) { @media_object.get_all_file_info(@object) }
+	  it 'can parse all files in an object' do
+	    expect(parse.class).to eq(Array)
+	    expect(parse[0].class).to eq(Hash)
+	  end
+
+          it 'includes mdpi barcodes' do
+            expect(parse[0][:other_identifier]).not_to be_empty
+          end
+	end
       end
 
       describe 'getting the file format' do
@@ -241,10 +249,17 @@ describe 'creation of media objects' do
       describe 'getting required fields for an object' do
         it 'gets the mandatory fields for an object' do
           fields = @media_object.get_fields_from_mods(@object)
-          [:title, :creator, :date_issued, :date_created].each do |field|
+          [:title, :creator, :date_issued, :date_created, :other_identifier, :other_identifier_type].each do |field|
             expect(fields.keys.include? field).to be_truthy
             expect(fields[field]).not_to be_nil
           end
+        end
+        it 'should have a bibliographic id if provided' do
+          #Use a fixture that has a catalog key
+          @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00034889.txt'))
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields.keys.include? :bibliographic_id).to be_truthy
+          expect(fields[:bibliographic_id]).not_to be_nil
         end
       end
 
