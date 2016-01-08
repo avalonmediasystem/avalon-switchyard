@@ -40,9 +40,9 @@ class Collection < ActiveRecord::Base
   # @param [String] name the name of the collection
   # @param [String] pid the Avalon pid of the collection
   # @param [String] url the url of the Avalon the collection was created in
-  def save_collection_in_database(name, pid, url)
+  def save_collection_in_database(name, pid, url, fullname)
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      Collection.create(name: name, pid: pid, avalon_url: url)
+      Collection.create(name: name, pid: pid, avalon_url: url, fullname: fullname)
     end
   end
 
@@ -70,6 +70,11 @@ class Collection < ActiveRecord::Base
     return nil
   end
 
+  def self.lookup_fullname(unit)
+    @@unit_map ||= SwitchyardConfiguration.new.load_yaml('units.yml')
+    @@unit_map[unit] || unit
+  end
+
   # Posts a new collection the Avalon
   #
   # @param [String] name The name of the new collection
@@ -79,9 +84,10 @@ class Collection < ActiveRecord::Base
   # @return [String] the pid of the collection created
   def post_new_collection(name, unit, managers, routing_target)
     managers = routing_target[:default_managers] if managers.nil?
-    payload = {name: name,
+    fullname = Collection.lookup_fullname(name)
+    payload = {name: fullname,
                description: "Avalon Switchyard Created Collection for #{unit}",
-               unit: unit,
+               unit: fullname,
                managers: managers
              }
     post_path = routing_target[:url] + '/admin/collections'
@@ -91,7 +97,7 @@ class Collection < ActiveRecord::Base
     end
     result = JSON.parse(resp.body).symbolize_keys
     fail "recieved an error #{result[:error]} when attempting to create collection #{payload} in Avalon #{@post_path}" unless result[:error].nil?
-    save_collection_in_database(payload[:name], result[:id], routing_target[:url])
+    save_collection_in_database(name, result[:id], routing_target[:url], fullname)
     result[:id]
   end
 end
