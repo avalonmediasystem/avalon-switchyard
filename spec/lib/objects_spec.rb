@@ -153,6 +153,7 @@ describe 'creation of media objects' do
   end
 
   describe 'transforming posting an object' do
+
     before :all do
       @registrable = @media_object.parse_request_body(load_sample_obj)
       @object = @registrable
@@ -172,20 +173,92 @@ describe 'creation of media objects' do
           @media_object.register_object(@registrable)
           @file_info = @object[:json][:parts][0]['files']['1']
         end
-        it 'returns the file structure for a file' do
-          expect(@media_object.file_structure_as_xml(Hash.from_xml(@file_info['structure'])['Item'], @object).class).to eq(String)
-        end
 
-        it 'writes an error when the file structure cannot be parsed' do
-          expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
-          @media_object.file_structure_as_xml({} , {})
-        end
-      end
+        describe 'parsing file info' do
+          it 'can parse info for one file in an object' do
+            expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
+          end
 
-      describe 'parsing file info' do
-        before :all do
-          @media_object.register_object(@registrable)
-          @file_info = @object[:json][:parts][0]['files']['1']
+          # Turn this back on once file parsing has been finalized
+          xit 'writes an error when the file cannot be parsed' do
+            expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+            @media_object.get_file_info(@object, @file_info)
+          end
+
+          describe do
+            it 'can parse all files in an object' do
+              parse = @media_object.get_all_file_info(@object)
+              expect(parse.class).to eq(Array)
+              expect(parse[0].class).to eq(Hash)
+            end
+          end
+
+          describe 'checking specific fixtures' do
+            it 'returns correctly parsed file info' do
+              @sobject = @media_object.parse_request_body(load_sample_obj(filename: 'GR00104460.txt'))
+              # @object = @media_object.parse_request_body(load_sample_obj)
+              @file_info = @sobject[:json][:parts][0]['files']['1']
+              @parsed_info = @media_object.get_file_info(@sobject, @file_info)
+
+              @fixture_info = {
+                workflow_name: "avalon", 
+                percent_complete: "100.0",
+                percent_succeeded: "100.0", 
+                percent_failed: "0", 
+                status_code: "COMPLETED", 
+                structure: "<?xml version=\"1.0\" ?>\n<Item label=\"Betacam 1/1 Side 1 (40000000693483)\">\n  <Span label=\"Segment 1\" begin=\"00:00:00.000\" end=\"00:01:56.290\"/>\n  <Span label=\"Segment 2\" begin=\"00:01:58.457\" end=\"00:02:28.323\"/>\n</Item>", 
+                label: 'Betacam 1/1 Side 1 (40000000693483)',
+                thumbnail_offset: 120457,
+                poster_offset: 120457,
+                files: [{:label=>"quality-low", 
+                          :id=>"MDPI_40000000693483_01_low.mp4", 
+                          :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_low_20160108_093019.mp4", 
+                          :hls_url=>"http://bl-uits-ct-mdpi.uits.indiana.edu/avalon_dark/media/B-RTVS/GR00104460_MDPI_40000000693483_01_low_20160108_093019.mp4",
+                          :duration=>"354.788000", 
+                          :mime_type=>"application/mp4", 
+                          :audio_bitrate=>"1152000", 
+                          :audio_codec=>"pcm_s24le", 
+                          :video_bitrate=>"50004785", 
+                          :video_codec=>"mpeg2video", 
+                          :width=>"720", 
+                          :height=>"512"}, 
+                        {:label=>"quality-medium", 
+                          :id=>"MDPI_40000000693483_01_med.mp4", 
+                          :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_med_20160108_093019.mp4", 
+                          :hls_url=>"http://bl-uits-ct-mdpi.uits.indiana.edu/avalon_dark/media/B-RTVS/GR00104460_MDPI_40000000693483_01_med_20160108_093019.mp4",
+                          :duration=>"354.788000", 
+                          :mime_type=>"application/mp4", 
+                          :audio_bitrate=>"1152000", 
+                          :audio_codec=>"pcm_s24le", 
+                          :video_bitrate=>"50004785", 
+                          :video_codec=>"mpeg2video", 
+                          :width=>"720", 
+                          :height=>"512"}, 
+                        {:label=>"quality-high", 
+                          :id=>"MDPI_40000000693483_01_high.mp4", 
+                          :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_high_20160108_093019.mp4", 
+                          :hls_url=>"http://bl-uits-ct-mdpi.uits.indiana.edu/avalon_dark/media/B-RTVS/GR00104460_MDPI_40000000693483_01_high_20160108_093019.mp4",
+                          :duration=>"354.788000", 
+                          :mime_type=>"application/mp4", 
+                          :audio_bitrate=>"1152000", 
+                          :audio_codec=>"pcm_s24le", 
+                          :video_bitrate=>"50004785", 
+                          :video_codec=>"mpeg2video", 
+                          :width=>"720", 
+                          :height=>"512"}],
+                file_location: 'rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_high_20160108_093019.mp4',
+                file_size: '2422702631',
+                duration: '354.788000',
+                date_ingested: '2015-09-29',
+                display_aspect_ratio: '4:3',
+                file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
+                original_frame_size: '720x512',
+                file_format: 'Moving Image'
+              }
+              expect(@parsed_info).to eq(@fixture_info)
+            end
+          end
+
         end
 	it 'can parse info for one file in an object' do
 	  expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
