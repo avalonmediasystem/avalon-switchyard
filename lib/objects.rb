@@ -186,12 +186,6 @@ class Objects
   def get_file_info(object, file)
     # TODO: Split me up further once file parsing is finalized
     file_hash = {}
-    file_info = {}
-    begin
-      file_info = Hash.from_xml(file['structure'])['Item']
-    rescue
-      object_error_and_exit(object, "failed to parse item xml")
-    end
 
     # Setup the defaults
     file_hash[:workflow_name] = 'avalon'
@@ -199,28 +193,37 @@ class Objects
     file_hash[:percent_succeeded] = '100.0'
     file_hash[:percent_failed] = '0'
     file_hash[:status_code] = 'COMPLETED'
-    file_hash[:label] = file_info['label']
 
-    # Get the file structure as XML and delete the label part out of it
-    # We don't need this, so we only error if it is there but badly formed
-    s = file_structure_as_xml(file_info, object)
-    file_hash[:structure] = s unless s.nil?
+    # Use provided xml as-is
+    file_hash[:structure] = file['structure']
 
-    # Get the rest of the info for derivatives. Use highest quality derivative available for item-level values
+    # Get masterfile label from provided structure
+    structure = Nokogiri::XML(file['structure'])
+    file_hash[:label] = structure.xpath('//Item').first['label']
+    
+    # Get time offsets from structure. Use second segment if available, otherwise use first, then add 2 seconds.
+    begintimes = structure.xpath('//Span').collect{|d|d['begin']}
+    offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
+    file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset+2000
+   
+    # Get info for derivatives. Use highest quality derivative available for item-level values.
     file_hash[:files] = []
     quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
     ['low','med','high'].each do |quality| 
+
+      # Set derivative-level info
       derivative = file['q'][quality] or next
       begin
         ffprobe_xml = Nokogiri::XML(derivative['ffprobe'])
         audio_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'audio\'][disposition/@default=\'1\']').first
         audio_stream ||= ffprobe_xml.xpath('//stream[@codec_type=\'audio\']').first || {}
-        video_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'vidio\'][disposition/@default=\'1\']').first
-        video_stream ||= ffprobe_xml.xpath('//stream[@codec_type=\'vidio\']').first || {}
+        video_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'video\'][disposition/@default=\'1\']').first
+        video_stream ||= ffprobe_xml.xpath('//stream[@codec_type=\'video\']').first || {}
         format = ffprobe_xml.xpath('//format').first
         derivative_hash = {label: quality_map[quality]}
         derivative_hash[:id] = derivative['filename']
-        derivative_hash[:url] = derivative['url']
+        derivative_hash[:url] = derivative['url_rtmp']
+        derivative_hash[:hls_url] = derivative['url_http']
         derivative_hash[:duration] = format['duration']
         derivative_hash[:mime_type] = MIME::Types.type_for(derivative['filename']).first.content_type
         derivative_hash[:audio_bitrate] = audio_stream['bit_rate']
@@ -234,30 +237,26 @@ class Objects
         object_error_and_exit(object, 'failed to parse ffprobe data for derivative(s)')
       end
 
-      file_hash[:file_location] = derivative_hash['url']
+      # Set masterfile-level info (highest level is set last)
+      file_hash[:file_location] = derivative_hash[:url]
       begin
         file_hash[:file_size] = format['size']
         file_hash[:duration] = format['duration']
-        #      file_hash[:poster_offset] = '0:01'
-        #      file_hash[:thumbnail_offset] = '0:01'
-        begin
-          date = file['ingest'].split(' ')[0]
-          date_split = date.split('/')
-          file_hash[:date_ingested] = "#{date_split[2]}-#{date_split[0]}-#{date_split[1]}"
-        rescue
-          file_hash[:date_ingested] = Time.now.split(' ')[0]
-        end
         file_hash[:display_aspect_ratio] = video_stream['display_aspect_ratio']
-        file_hash[:file_checksum] = 'placeholder'
-        file_hash[:original_frame_size] = 'placeholder'
+        file_hash[:original_frame_size] = "#{derivative_hash[:width]}x#{derivative_hash[:height]}" if derivative_hash[:width] and derivative_hash[:height]
       rescue
         object_error_and_exit(object, 'failed to parse ffprobe data for object')
       end
-
-      file_hash[:file_format] = get_file_format(object)
-
     end
 
+    #Set masterfile-level info
+    begin
+      file_hash[:date_ingested] = Date.parse(file['ingest']).strftime('%Y-%m-%d')
+    rescue
+      file_hash[:date_ingested] = Time.now.strftime('%Y-%m-%d')
+    end
+    file_hash[:file_checksum] = file["master_md5"]
+    file_hash[:file_format] = get_file_format(object)
     file_hash
   end
 
@@ -353,18 +352,6 @@ class Objects
     hash_mods
   end
 
-  # Gets the file structure information and returns it as XML
-  #
-  # @param [Hash] info the structure information on the object
-  # @param [Hash] the object passed to Switchyard
-  def file_structure_as_xml(info, object)
-    # Get the file structure as XML and delete the label part out of it
-    # We don't need this, so we only error if it is there but badly formed
-    return info['Span'].to_xml.to_s
-  rescue
-    object_error_and_exit(object, 'failed to parse the xml representing the file structure')
-  end
-
   # Gets the file format from the mods, writes an error and terminates if the file format cannot be found
   #
   # @param [Hash] the object as passed to Switchyard
@@ -374,4 +361,23 @@ class Objects
   rescue
     object_error_and_exit(object, 'failed to parse file_format from mods')
   end
+
+  # Transforms to milliseconds time string with format 00:00:00.0000
+  #
+  # @param [String] the time to transform
+  # @return [Int] the time in milliseconds
+  def structure_time_to_milliseconds(value)
+    milliseconds = if value.is_a?(Numeric)
+      value.floor
+    elsif value.is_a?(String)
+      result = 0
+      segments = value.split(/:/).reverse
+      segments.each_with_index { |v,i| result += i > 0 ? v.to_f * (60**i) * 1000 : (v.to_f * 1000) }
+      result.to_i
+    else
+      value.to_i
+    end
+    milliseconds
+  end
+
 end
