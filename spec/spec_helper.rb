@@ -44,6 +44,11 @@ end
 
 RSpec.configure { |c| c.include RSpecMixin }
 
+$log = Logger.new 'test.log'
+$log.level = Logger::DEBUG
+$log.datetime_format = '%Y-%m-%d %H:%M:%S%z '
+RestClient.log = $log
+
 # Loads a sample object fixture
 # Grabs a random one if the file is not specified
 def load_sample_obj(filename: nil)
