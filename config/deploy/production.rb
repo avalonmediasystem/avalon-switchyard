@@ -63,5 +63,5 @@
 server fetch(:deploy_host), user: fetch(:user), roles: %w(web db app)
 
 set :deploy_to, '/var/www/switchyard'
-set :environment, 'staging'
-set :env, 'staging'
+set :environment, 'production'
+set :env, 'production'

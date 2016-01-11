@@ -52,7 +52,7 @@ namespace :deploy do
   desc 'Restart application and run db migrations'
   task :restart do
     on roles(:app), in: :sequence, wait: 5 do
-      execute :rake, 'db:migrate'
+      execute "cd '#{release_path}'; RACK_ENV=#{fetch(:env)} bundle exec rake db:migrate"
       execute :mkdir, release_path.join('tmp')
       execute :touch, release_path.join('tmp/restart.txt')
     end
