@@ -26,7 +26,11 @@ set :scm, :git
 # set :pty, true
 
 # Default value for :linked_files is []
-set :linked_files, fetch(:linked_files, []).push('config/database.yml')
+set :linked_files, %w(config/database.yml config/units.yml config/switchyard.yml config/avalons.yml)
+# set :linked_files, fetch(:linked_files, []).push('config/database.yml')
+# set :linked_files, fetch(:linked_files, []).push('config/units.yml')
+# set :linked_files, fetch(:linked_files, []).push('config/switchyard.yml')
+# set :linked_files, fetch(:linked_files, []).push('config/avalons.yml')
 
 # Default value for linked_dirs is []
 # set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'vendor/bundle', 'public/system')
@@ -45,9 +49,10 @@ namespace :deploy do
     end
   end
 
-  desc 'Restart application'
+  desc 'Restart application and run db migrations'
   task :restart do
     on roles(:app), in: :sequence, wait: 5 do
+      execute :rake, 'db:migrate'
       execute :mkdir, release_path.join('tmp')
       execute :touch, release_path.join('tmp/restart.txt')
     end
