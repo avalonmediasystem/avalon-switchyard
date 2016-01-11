@@ -225,7 +225,7 @@ class Objects
         derivative_hash[:id] = derivative['filename']
         derivative_hash[:url] = derivative['url_rtmp']
         derivative_hash[:hls_url] = derivative['url_http']
-        derivative_hash[:duration] = (format['duration'].to_f * 1000).to_i
+        derivative_hash[:duration] = (format['duration'].to_f * 1000).to_i.to_s
         derivative_hash[:mime_type] = MIME::Types.type_for(derivative['filename']).first.content_type
         derivative_hash[:audio_bitrate] = audio_stream['bit_rate']
         derivative_hash[:audio_codec] = audio_stream['codec_name']
@@ -242,7 +242,7 @@ class Objects
       file_hash[:file_location] = derivative_hash[:url]
       begin
         file_hash[:file_size] = format['size']
-        file_hash[:duration] = (format['duration'].to_f * 1000).to_i
+        file_hash[:duration] = (format['duration'].to_f * 1000).to_i.to_s
         file_hash[:display_aspect_ratio] = video_stream['display_aspect_ratio']
         file_hash[:original_frame_size] = "#{derivative_hash[:width]}x#{derivative_hash[:height]}" if derivative_hash[:width] and derivative_hash[:height]
       rescue

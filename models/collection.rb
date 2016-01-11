@@ -45,7 +45,7 @@ class Collection < ActiveRecord::Base
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       $log.debug "Attempting create"
       begin
-        Collection.create(name: name, pid: pid, avalon_url: url, fullname: fullname)
+        c = Collection.create(name: name, pid: pid, avalon_url: url, fullname: fullname)
       rescue Exception => e
         $log.debug "Result of create: #{c}, #{e}"
       end
