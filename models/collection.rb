@@ -41,8 +41,15 @@ class Collection < ActiveRecord::Base
   # @param [String] pid the Avalon pid of the collection
   # @param [String] url the url of the Avalon the collection was created in
   def save_collection_in_database(name, pid, url, fullname)
+    $log.debug "saving collection with #{name}, #{pid}, #{url}, #{fullname}"
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      Collection.create(name: name, pid: pid, avalon_url: url, fullname: fullname)
+      $log.debug "Attempting create"
+      begin
+        Collection.create(name: name, pid: pid, avalon_url: url, fullname: fullname)
+      rescue Exception => e
+        $log.debug "Result of create: #{c}, #{e}"
+      end
+      $log.debug "Result of create: #{c}"
     end
   end
 
@@ -57,6 +64,7 @@ class Collection < ActiveRecord::Base
     unless info[:exists]
       # TODO: Make this smarter for how it selects managers and names the collection_object
       # Currently name is used for both unit and collection name and default managers are always loaded (via passing nil)
+      $log.debug "posting collection with #{name} #{routing_target[:url]}"
       post_new_collection(name, name, managers_for_object(object), routing_target)
       info = collection_information(name, routing_target[:url])
     end
@@ -93,9 +101,13 @@ class Collection < ActiveRecord::Base
     post_path = routing_target[:url] + '/admin/collections'
     resp = ''
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+      $log.debug "Posting"
       resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
+      $log.debug "Posted and got response: #{resp}"
     end
     result = JSON.parse(resp.body).symbolize_keys
+    $log.debug "Posted and got result: #{result}"
+
     fail "recieved an error #{result[:error]} when attempting to create collection #{payload} in Avalon #{@post_path}" unless result[:error].nil?
     save_collection_in_database(name, result[:id], routing_target[:url], fullname)
     result[:id]

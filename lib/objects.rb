@@ -33,6 +33,7 @@ class Objects
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
+    $log.debug "Posting MediaObject response: #{resp}"
     object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'submitted',
@@ -224,7 +225,7 @@ class Objects
         derivative_hash[:id] = derivative['filename']
         derivative_hash[:url] = derivative['url_rtmp']
         derivative_hash[:hls_url] = derivative['url_http']
-        derivative_hash[:duration] = format['duration']
+        derivative_hash[:duration] = (format['duration'].to_f * 1000).to_i
         derivative_hash[:mime_type] = MIME::Types.type_for(derivative['filename']).first.content_type
         derivative_hash[:audio_bitrate] = audio_stream['bit_rate']
         derivative_hash[:audio_codec] = audio_stream['codec_name']
@@ -241,7 +242,7 @@ class Objects
       file_hash[:file_location] = derivative_hash[:url]
       begin
         file_hash[:file_size] = format['size']
-        file_hash[:duration] = format['duration']
+        file_hash[:duration] = (format['duration'].to_f * 1000).to_i
         file_hash[:display_aspect_ratio] = video_stream['display_aspect_ratio']
         file_hash[:original_frame_size] = "#{derivative_hash[:width]}x#{derivative_hash[:height]}" if derivative_hash[:width] and derivative_hash[:height]
       rescue
