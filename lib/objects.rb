@@ -358,7 +358,12 @@ class Objects
   # @param [Hash] the object as passed to Switchyard
   # @return [String] the file format used for this file
   def get_file_format(object)
-    return parse_mods(object)['typeOfResource'].split.map(&:capitalize).join(' ')
+    format = parse_mods(object)['typeOfResource']
+    # Currently the two values for format in the mods are 'moving image' and 'sound recording'
+    # Avalon wants these to be 'Moving image' and 'Sound'
+    #change Moving Image to Moving image
+    format = format.split(' ')[0] if format == 'sound recording' # knock off the recording part if this is sound
+    return format.slice(0,1).capitalize + format.slice(1..-1) # capitalize the first letter
   rescue
     object_error_and_exit(object, 'failed to parse file_format from mods')
   end

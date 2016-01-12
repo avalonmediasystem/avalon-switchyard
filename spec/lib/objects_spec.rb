@@ -253,7 +253,7 @@ describe 'creation of media objects' do
                 display_aspect_ratio: '4:3',
                 file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
                 original_frame_size: '720x512',
-                file_format: 'Moving Image'
+                file_format: 'Moving image'
               }
               expect(@parsed_info).to eq(@fixture_info)
             end
