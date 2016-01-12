@@ -24,7 +24,7 @@ class Objects
   # Posts a new media object to an Avalon, creates the collection first if needed
   # Writes the status of the submission to the database
   #
-  # @param [Hash] object the object as submitted to Switchyard
+  # @param [Hash] object the object as deposited in Switchyard
   def post_new_media_object(object)
     routing_target = attempt_to_route(object)
     payload = transform_object(object)
@@ -36,13 +36,13 @@ class Objects
     $log.debug "Posting MediaObject response: #{resp}"
     object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
-    update_info = { status: 'submitted',
+    update_info = { status: 'deposited',
                     error: false,
                     last_modified: Time.now.utc.iso8601.to_s,
                     avalon_chosen: routing_target[:url],
                     avalon_pid: pid,
-                    avalon_url: "#{routing_target[:url]}/#{pid}",
-                    message: 'successfully submitted' }
+                    avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
+                    message: 'successfully deposited in avalon' }
     update_status(object[:json][:group_name], update_info)
   end
 
@@ -60,10 +60,10 @@ class Objects
     check_request(return_hash)
   end
 
-  # Checks the submitted request for valid json, and a group name
+  # Checks the posted request for valid json, and a group name
   #
   # @param [Hash] hashed_request The request broken up by parse_request_body
-  # @return [Hash] hashed_request The submitted request with additional error information
+  # @return [Hash] hashed_request The posted request with additional error information
   # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
@@ -145,7 +145,7 @@ class Objects
 
   # Transforms the posted object into the json form needed to submit it to an Avalon instance
   #
-  # @param [Hash] object The JSON submitted to the router with its keys symbolized
+  # @param [Hash] object The JSON posted to the router with its keys symbolized
   # @return [String] the object in the json format needed to submit it to Avalon
   def transform_object(object)
     fields = {}
@@ -201,16 +201,16 @@ class Objects
     # Get masterfile label from provided structure
     structure = Nokogiri::XML(file['structure'])
     file_hash[:label] = structure.xpath('//Item').first['label']
-    
+
     # Get time offsets from structure. Use second segment if available, otherwise use first, then add 2 seconds.
     begintimes = structure.xpath('//Span').collect{|d|d['begin']}
     offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
     file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset+2000
-   
+
     # Get info for derivatives. Use highest quality derivative available for item-level values.
     file_hash[:files] = []
     quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
-    ['low','med','high'].each do |quality| 
+    ['low','med','high'].each do |quality|
 
       # Set derivative-level info
       derivative = file['q'][quality] or next
