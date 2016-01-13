@@ -60,7 +60,7 @@ class Objects
       resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     $log.debug "Updating MediaObject response: #{resp}"
-    object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
+    object_error_and_exit(object, "Failed to update media object in Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
                     error: false,
