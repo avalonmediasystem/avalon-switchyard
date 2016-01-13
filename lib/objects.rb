@@ -97,7 +97,7 @@ class Objects
 
     # If the object is already on file we need to make sure it has an avalon pid in the avalon
     # we plan to send it to (since it might be on file in a different avalon)
-    attempt_to_route(object) == status[:avalon_chosen]
+    attempt_to_route(object)[:url] == status[:avalon_chosen]
   end
 
   # Checks the posted request for valid json, and a group name

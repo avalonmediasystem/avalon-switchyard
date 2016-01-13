@@ -439,12 +439,12 @@ describe 'creation of media objects' do
     end
 
     it 'returns false if the object has not been submitted to this avalon' do
-      allow(@media_object).to receive(:attempt_to_route).and_return('avalonfoobar')
+      allow(@media_object).to receive(:attempt_to_route).and_return(url: 'avalonfoobar')
       expect(@media_object.already_exists_in_avalon?({json:{group_name: 'TestingExistance'}})).to be_truthy
     end
 
     it 'returns true if the object has been submitted to this avalon' do
-      allow(@media_object).to receive(:attempt_to_route).and_return('foo')
+      allow(@media_object).to receive(:attempt_to_route).and_return(url: 'foo')
       expect(@media_object.already_exists_in_avalon?({json:{group_name: 'TestingExistance'}})).to be_falsey
     end
   end
