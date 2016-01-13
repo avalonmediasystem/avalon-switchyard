@@ -398,4 +398,54 @@ describe 'creation of media objects' do
       expect{@media_object.post_new_media_object(@object)}.to raise_error
     end
   end
+
+  describe 'updating a media objects' do
+    before :all do
+      @object = @media_object.parse_request_body(load_sample_obj(filename: @fixture))
+      @media_object.register_object(@object)
+      @avalon_pid = 'avalon:foo'
+    end
+
+    it 'properly forms a post request for an object' do
+      allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
+      allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+      stub_request(:put, "https://youravalon.edu/#{@avalon_pid}.json").to_return(body: {id: 'pid'}.to_json, status: 200)
+      @media_object.update_media_object(@object)
+      results = @media_object.object_status_as_json(@object[:json][:group_name])
+      expect(results['status']).to eq('deposited')
+      expect(results['error']).to be_falsey
+      expect(results['avalon_pid']).to eq('pid')
+      expect(results['avalon_chosen']).to eq(Router.new.select_avalon(@object)[:url])
+    end
+
+    it 'writes an error when the post request fails' do
+      allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+      stub_request(:put, "https://youravalon.edu/media_objects.json").to_return(body: {error: 'unh-oh'}.to_json, status: 500)
+      expect{@media_object.update_media_object(@object)}.to raise_error
+    end
+  end
+
+  describe 'determining existance of a media object' do
+    before :all do
+      MediaObject.create(group_name: 'TestingExistance', status: 'received', error: false, message: 'object received', created: '', last_modified: '', avalon_chosen: 'avalonfoobar', avalon_pid: '42', avalon_url: '', locked: false)
+    end
+
+    after :all do
+      MediaObject.destroy_all(group_name: 'TestingExistance')
+    end
+
+    it 'returns false if the object has not been processed' do
+      expect(@media_object.already_exists_in_avalon?({json:{group_name: 'no_entry'}})).to be_falsey
+    end
+
+    it 'returns false if the object has not been submitted to this avalon' do
+      allow(@media_object).to receive(:attempt_to_route).and_return('avalonfoobar')
+      expect(@media_object.already_exists_in_avalon?({json:{group_name: 'TestingExistance'}})).to be_truthy
+    end
+
+    it 'returns true if the object has been submitted to this avalon' do
+      allow(@media_object).to receive(:attempt_to_route).and_return('foo')
+      expect(@media_object.already_exists_in_avalon?({json:{group_name: 'TestingExistance'}})).to be_falsey
+    end
+  end
 end

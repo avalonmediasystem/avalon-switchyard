@@ -94,7 +94,9 @@ post '/media_objects/create' do
   end
   stream do |out|
     out << status.to_json # return the initial status so MDPI has some response and then keep working
-    media_object.post_new_media_object(object)
+    already_present = media_object.already_exists_in_avalon?(object)
+    media_object.post_new_media_object(object) unless already_present
+    media_object.update_media_object(object) if already_present
   end
 
 end
