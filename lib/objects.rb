@@ -92,7 +92,7 @@ class Objects
   # @param [Hash] object the object submitted to Switchyard
   # @return [Boolean] whether or not it exists
   def already_exists_in_avalon?(object)
-    status = MediaObject.find_by(group_name: object[:json][:group_name])
+    status = object_status_as_json(object[:json][:group_name])
     return false if status.nil? || status[:avalon_pid].nil? # This means we have never processed this object before
 
     # If the object is already on file we need to make sure it has an avalon pid in the avalon
@@ -144,10 +144,12 @@ class Objects
   # @return results [Boolean] :success true if successfull, false if not
   # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
   def register_object(object)
+    current_object = {}
+    current_object = object_status_as_json(object[:json][:group_name]) if already_exists_in_avalon?(object)
     destroy_object(object[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.create(group_name: object[:json][:group_name], status: 'received', error: false, message: 'object received', created: t, last_modified: t, avalon_chosen: '', avalon_pid: '', avalon_url: '', locked: false)
+      MediaObject.create(group_name: object[:json][:group_name], status: 'received', error: false, message: 'object received', created: current_object[:created] || t, last_modified: t, avalon_chosen: current_object[:avalon_chosen] || '', avalon_pid: current_object[:avalon_pid] || '', avalon_url: current_object[:avalon_url] || '', locked: false)
       return { success: true, group_name: object[:json][:group_name] }
     end
   rescue Exception => e
