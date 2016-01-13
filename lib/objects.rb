@@ -54,7 +54,7 @@ class Objects
   def update_media_object(object)
     routing_target = attempt_to_route(object)
     payload = transform_object(object)
-    put_path = routing_target[:url] + "/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
+    put_path = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
     resp = ''
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}

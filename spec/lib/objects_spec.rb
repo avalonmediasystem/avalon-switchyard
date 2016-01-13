@@ -411,7 +411,7 @@ describe 'creation of media objects' do
     it 'properly forms a post request for an object' do
       allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
-      stub_request(:put, "https://youravalon.edu/#{@avalon_pid}.json").to_return(body: {id: 'pid'}.to_json, status: 200)
+      stub_request(:put, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(body: {id: 'pid'}.to_json, status: 200)
       @media_object.update_media_object(@object)
       results = @media_object.object_status_as_json(@object[:json][:group_name])
       expect(results['status']).to eq('deposited')
