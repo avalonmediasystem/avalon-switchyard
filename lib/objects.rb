@@ -97,6 +97,7 @@ class Objects
 
     # If the object is already on file we need to make sure it has an avalon pid in the avalon
     # we plan to send it to (since it might be on file in a different avalon)
+    $log.debug "Attemping to check match with urls of #{attempt_to_route(object)[:url]} and #{status}, #{status[:avalon_chosen]}"
     attempt_to_route(object)[:url] == status[:avalon_chosen]
   end
 
