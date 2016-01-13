@@ -84,14 +84,16 @@ describe 'creation of media objects' do
     end
 
     it 'retries registering an object when there is an error' do
+      MediaObject.destroy_all(group_name: @content[:json][:group_name])
       allow(ActiveRecord::Base).to receive(:create).and_raise(ActiveRecord::ConnectionTimeoutError)
       expect(ActiveRecord::Base).to receive(:create).exactly(Sinatra::Application.settings.max_retries).times
       expect(@media_object.register_object(@content)[:success]).to be_falsey
     end
 
-    it 'removes a previous entry when an object is retried' do
-      expect(ActiveRecord::Base).to receive(:destroy_all).exactly(:once)
-      expect(@media_object.register_object(@content)).to be_truthy
+    it 'updates a previous entry when an object is retried' do
+      @media_object.register_object(@content) #register object so it is present
+      expect(@media_object).to receive(:update_status).exactly(:once)
+      expect(@media_object.register_object(@content)).to be_truthy #run it again
     end
 
     it 'retries destroying an object when there is an error' do
