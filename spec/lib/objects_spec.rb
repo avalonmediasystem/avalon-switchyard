@@ -447,7 +447,7 @@ describe 'creation of media objects' do
 
     it 'returns true if the object has been submitted to this avalon' do
       allow(@media_object).to receive(:attempt_to_route).and_return(url: 'avalonfoobar')
-      allow(@media_object).to receive(:object_status_as_json).and_return(avalon_pid: 42, avalon_chosen: 'avalonfoobar')
+      allow(@media_object).to receive(:object_status_as_json).and_return('avalon_pid' => 42, 'avalon_chosen' => 'avalonfoobar')
       expect(@media_object.already_exists_in_avalon?({json:{group_name: 'TestingExistance'}})).to be_truthy
     end
   end

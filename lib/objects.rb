@@ -93,12 +93,12 @@ class Objects
   # @return [Boolean] whether or not it exists
   def already_exists_in_avalon?(object)
     status = object_status_as_json(object[:json][:group_name])
-    return false if status.nil? || status[:avalon_pid].nil? # This means we have never processed this object before
+    return false if status.nil? || status['avalon_pid'].nil? # This means we have never processed this object before
 
     # If the object is already on file we need to make sure it has an avalon pid in the avalon
     # we plan to send it to (since it might be on file in a different avalon)
     $log.debug "Attemping to check match with urls of #{attempt_to_route(object)[:url]} and #{status}, #{status[:avalon_chosen]}"
-    attempt_to_route(object)[:url] == status[:avalon_chosen]
+    attempt_to_route(object)[:url] == status['avalon_chosen']
   end
 
   # Checks the posted request for valid json, and a group name
