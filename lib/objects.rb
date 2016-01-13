@@ -46,6 +46,32 @@ class Objects
     update_status(object[:json][:group_name], update_info)
   end
 
+  # Updates a media object currently in Avalon, creates the collection first if needed
+  # Writes the status of the submission to the database
+  #
+  # @param [Hash] object the object as deposited in Switchyard
+  # TODO: refactor this and post_new_media_object to follow DRY
+  def update_media_object(object)
+    routing_target = attempt_to_route(object)
+    payload = transform_object(object)
+    put_path = routing_target[:url] + "/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
+    resp = ''
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+      resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
+    end
+    $log.debug "Updating MediaObject response: #{resp}"
+    object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
+    pid = JSON.parse(resp.body).symbolize_keys[:id]
+    update_info = { status: 'deposited',
+                    error: false,
+                    last_modified: Time.now.utc.iso8601.to_s,
+                    avalon_chosen: routing_target[:url],
+                    avalon_pid: pid,
+                    avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
+                    message: 'successfully deposited in avalon' }
+    update_status(object[:json][:group_name], update_info)
+  end
+
   # Takes the information posts to the API in the request body and parses it
   #
   # @param [String] body The body of the post request
@@ -58,6 +84,20 @@ class Objects
     return_hash = {}
     return_hash[:json] = parse_json(body)
     check_request(return_hash)
+  end
+
+  # Determines if the item already exists in an instance of avalon
+  # uses the current state of the object to determine a target avalon and checks the switchyard database to see if a previous version was sent to this avalon
+  #
+  # @param [Hash] object the object submitted to Switchyard
+  # @return [Boolean] whether or not it exists
+  def already_exists_in_avalon?(object)
+    status = MediaObject.find_by(group_name: object[:json][:group_name])
+    return false if status.nil? || status[:avalon_pid].nil? # This means we have never processed this object before
+
+    # If the object is already on file we need to make sure it has an avalon pid in the avalon
+    # we plan to send it to (since it might be on file in a different avalon)
+    attempt_to_route(object) == status[:avalon_chosen]
   end
 
   # Checks the posted request for valid json, and a group name
