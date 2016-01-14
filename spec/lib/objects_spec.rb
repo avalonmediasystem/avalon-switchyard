@@ -324,7 +324,7 @@ describe 'creation of media objects' do
       describe 'getting required fields for an object' do
         it 'gets the mandatory fields for an object' do
           fields = @media_object.get_fields_from_mods(@object)
-          [:title, :creator, :date_issued, :date_created, :other_identifier, :other_identifier_type].each do |field|
+          [:title, :creator, :date_issued, :other_identifier, :other_identifier_type].each do |field|
             expect(fields.keys.include? field).to be_truthy
             expect(fields[field]).not_to be_nil
           end
