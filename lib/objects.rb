@@ -415,7 +415,7 @@ class Objects
     # Currently the two values for format in the mods are 'moving image' and 'sound recording'
     # Avalon wants these to be 'Moving image' and 'Sound'
     #change Moving Image to Moving image
-    format = 'Sound' if format.downcase.include?('sound') # knock off the recording part if this is sound
+    format = 'sound' if format.downcase.include?('sound') # knock off the recording part if this is sound
     return format.slice(0,1).capitalize + format.slice(1..-1) # capitalize the first letter
   rescue
     object_error_and_exit(object, 'failed to parse file_format from mods')
