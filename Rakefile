@@ -5,6 +5,15 @@ namespace :db do
   task :load_config do
     require './switchyard.rb'
   end
+
+  # Deletes all rows in collections and media_objects
+  # @example Clear collections and media_objects table
+  # RACK_ENV=env bundle exec rake db:clear_history
+  task :clear_history do
+    require './switchyard.rb'
+    MediaObject.delete_all
+    Collection.delete_all
+  end
 end
 
 namespace :setup do
