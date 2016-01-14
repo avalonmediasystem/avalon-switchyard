@@ -365,7 +365,7 @@ class Objects
     fields[:title] = object[:json][:metadata]['call_number'] || 'Unknown' if fields[:title] == ''
     fields[:creator] = ['MDPI']
     fields[:date_issued] = mods.xpath('/mods/originInfo/dateIssued').text
-    fields[:dated_issued] = '19uu' if fields[:date_issued] == ''
+    fields[:date_issued] = '19uu' if fields[:date_issued] == ''
 
     # Check for a creation date
     # This is commented out because this is getting the wrong date
