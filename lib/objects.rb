@@ -362,7 +362,7 @@ class Objects
 
     # Check for the default fields we need, we may only have these if a machine generated mods
     fields[:title] = mods.xpath('/mods/titleInfo/title').text
-    fields[:title] = 'Untitled' if fields[:title] == ''
+    fields[:title] = object[:json][:metadata]['call_number'] || 'Unknown' if fields[:title] == ''
     fields[:creator] = ['MDPI']
     fields[:date_issued] = mods.xpath('/mods/originInfo/dateIssued').text
     fields[:dated_issued] = '19uu' if fields[:date_issued] == ''
