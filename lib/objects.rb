@@ -365,10 +365,13 @@ class Objects
     fields[:date_issued] = hash_mods['originInfo']['dateIssued'] || '19uu'
 
     # Check for a creation date
-    unless hash_mods['recordInfo'].nil?
-      fields[:date_created] = hash_mods['recordInfo']['recordCreationDate']
-    end
-    fields[:date_created] = Time.now.to_s.delete(' ') if fields[:date_created].nil?
+    # This is commented out because this is getting the wrong date
+    # We are currently not passed the proper creation date (when the physical item was created)
+    # So we cannot fill this field in, thus nixed
+    # unless hash_mods['recordInfo'].nil?
+    #   fields[:date_created] = hash_mods['recordInfo']['recordCreationDate']
+    # end
+    # fields[:date_created] = Time.now.to_s.delete(' ') if fields[:date_created].nil?
 
     # Get the CatKey if we have one
     fields[:bibliographic_id] = object[:json][:metadata]['catalog_key'] unless object[:json][:metadata]['catalog_key'].nil?
