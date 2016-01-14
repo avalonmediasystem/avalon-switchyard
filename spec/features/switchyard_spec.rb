@@ -78,6 +78,7 @@ describe 'Switchyard API Functionality' do
         it 'posts a valid request and displays the result as json' do
           mo = Objects.new
           allow(Objects).to receive(:new).and_return(mo)
+          allow(mo).to receive(:already_exists_in_avalon?).and_return(false)
           allow(mo).to receive(:post_new_media_object).and_return('')
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.ok?).to be_truthy
