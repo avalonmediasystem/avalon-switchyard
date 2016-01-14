@@ -251,7 +251,7 @@ describe 'creation of media objects' do
                 file_location: 'rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_high_20160108_093019.mp4',
                 file_size: '2422702631',
                 duration: '354788',
-                date_ingested: '2015-09-29',
+                date_digitized: '2015-09-29',
                 display_aspect_ratio: '4:3',
                 file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
                 original_frame_size: '720x512',

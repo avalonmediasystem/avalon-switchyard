@@ -299,9 +299,10 @@ class Objects
 
     #Set masterfile-level info
     begin
-      file_hash[:date_ingested] = Date.parse(file['ingest']).strftime('%Y-%m-%d')
+      file_hash[:date_digitized] = Date.parse(file['ingest']).strftime('%Y-%m-%d')
     rescue
-      file_hash[:date_ingested] = Time.now.strftime('%Y-%m-%d')
+      # Still rescue if we can't parse it, but now don't supply a default just leave it blank
+      #file_hash[:date_ingested] = Time.now.strftime('%Y-%m-%d')
     end
     file_hash[:file_checksum] = file["master_md5"]
     file_hash[:file_format] = get_file_format(object)
