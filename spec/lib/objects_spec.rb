@@ -301,7 +301,7 @@ describe 'creation of media objects' do
     describe 'obtaining field information for an object' do
       describe 'parsing mods' do
         it 'it can parse the mods' do
-          expect(@media_object.parse_mods(@object).class).to eq(Hash)
+          expect(@media_object.parse_mods(@object).class).to eq(Nokogiri::XML::Document)
         end
 
         it 'writes an error when the mods cannot be parsed' do

@@ -358,12 +358,14 @@ class Objects
     # Populate the rest if Fields
     # Make sure the XML can be parsed by having Nokogiri take a pass at it
     fields = {}
-    hash_mods = parse_mods(object)
+    mods = parse_mods(object)
 
     # Check for the default fields we need, we may only have these if a machine generated mods
-    fields[:title] = hash_mods['titleInfo']['title'] || 'Untitled'
+    fields[:title] = mods.xpath('/mods/titleInfo/title').text
+    fields[:title] = 'Untitled' if fields[:title] == ''
     fields[:creator] = ['MDPI']
-    fields[:date_issued] = hash_mods['originInfo']['dateIssued'] || '19uu'
+    fields[:date_issued] = mods.xpath('/mods/originInfo/dateIssued').text
+    fields[:dated_issued] = '19uu' if fields[:date_issued] == ''
 
     # Check for a creation date
     # This is commented out because this is getting the wrong date
@@ -385,23 +387,23 @@ class Objects
   # Gets the collection name for an object,
   def get_collection_name(object)
     begin
-      return parse_mods(object)['identifier'][0]
+      return parse_mods(object).xpath('/mods/identifier').text
     rescue
       object_error_and_exit(object, 'failed to determine target collection for object')
     end
   end
 
-  # Parse the mods in the object as a hash, if this fails it will write an error to the db and end the thread
+  # Parse the mods in the object as XML, if this fails it will write an error to the db and end the thread
   #
   # @param [Hash] object The media object in its posted json hash
-  # @return [Hash] the mods as a hash with keys as strings
+  # @return [Nokogiri::XML::Document ] the mods as a Nokogiri XML Documents
   def parse_mods(object)
     begin
-      hash_mods = Hash.from_xml(object[:json][:metadata]['mods'])['mods']
+      parsed_mods = Nokogiri::XML(object[:json][:metadata]['mods'])
+      return parsed_mods.remove_namespaces!
     rescue
       object_error_and_exit(object, 'failed to parse mods as XML')
     end
-    hash_mods
   end
 
   # Gets the file format from the mods, writes an error and terminates if the file format cannot be found
@@ -409,7 +411,7 @@ class Objects
   # @param [Hash] the object as passed to Switchyard
   # @return [String] the file format used for this file
   def get_file_format(object)
-    format = parse_mods(object)['typeOfResource']
+    format = parse_mods(object).xpath('/mods/typeOfResource').text
     # Currently the two values for format in the mods are 'moving image' and 'sound recording'
     # Avalon wants these to be 'Moving image' and 'Sound'
     #change Moving Image to Moving image
