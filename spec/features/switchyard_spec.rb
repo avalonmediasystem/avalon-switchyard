@@ -58,7 +58,7 @@ describe 'Switchyard API Functionality' do
         it 'halts with error code 200 if the object is not found immediately after registration' do
           mo = Objects.new
           allow(Objects).to receive(:new).and_return(mo)
-          allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 200)
+          allow(mo).to receive(:object_status_as_json).and_return(success: false, error: 404)
           post '/media_objects/create', load_sample_obj, 'HTTP_API_TOKEN' => @valid_token
           expect(last_response.status).to eq(200)
           expect(last_response.status).to eq(200)
