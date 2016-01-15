@@ -293,7 +293,16 @@ class Objects
       begin
         file_hash[:file_size] = format['size']
         file_hash[:duration] = (format['duration'].to_f * 1000).to_i.to_s
-        file_hash[:display_aspect_ratio] = video_stream['display_aspect_ratio']
+        # FFProbe sends the ratio as 4:3 or similar, but Avalon needs this as a fraction
+        # So we need to make a fraction for avalon
+
+        begin
+          ratio = video_stream['display_aspect_ratio'].split(':')
+          file_hash[:display_aspect_ratio] = ratio[0].to_i * 1.0 / ratio[1].to_i
+        rescue
+          # If we have a ratio but can't parse it, just default to 4:3 shown as 1.33
+          file_hash[:display_aspect_ratio] = 1.33 unless video_stream['display_aspect_ratio'].nil?
+        end
         file_hash[:original_frame_size] = "#{derivative_hash[:width]}x#{derivative_hash[:height]}" if derivative_hash[:width] and derivative_hash[:height]
       rescue
         object_error_and_exit(object, 'failed to parse ffprobe data for object')
