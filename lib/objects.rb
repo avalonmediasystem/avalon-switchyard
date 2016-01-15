@@ -298,10 +298,10 @@ class Objects
 
         begin
           ratio = video_stream['display_aspect_ratio'].split(':')
-          file_hash[:display_aspect_ratio] = ratio[0].to_i * 1.0 / ratio[1].to_i
+          file_hash[:display_aspect_ratio] = (ratio[0].to_i * 1.0 / ratio[1].to_i).round(10).to_s
         rescue
           # If we have a ratio but can't parse it, just default to 4:3 shown as 1.33
-          file_hash[:display_aspect_ratio] = 1.33 unless video_stream['display_aspect_ratio'].nil?
+          file_hash[:display_aspect_ratio] = '1.33' unless video_stream['display_aspect_ratio'].nil?
         end
         file_hash[:original_frame_size] = "#{derivative_hash[:width]}x#{derivative_hash[:height]}" if derivative_hash[:width] and derivative_hash[:height]
       rescue

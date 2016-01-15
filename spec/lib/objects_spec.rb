@@ -252,7 +252,7 @@ describe 'creation of media objects' do
                 file_size: '2422702631',
                 duration: '354788',
                 date_digitized: '2015-09-29',
-                display_aspect_ratio: 4.0/3,
+                display_aspect_ratio: (4/3.0).round(10).to_s,
                 file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
                 original_frame_size: '720x512',
                 file_format: 'Moving image'
