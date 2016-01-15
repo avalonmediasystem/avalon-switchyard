@@ -261,11 +261,11 @@ class Objects
     file_hash[:files] = []
     quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
     ['low','med','high'].each do |quality|
-
       # Set derivative-level info
       derivative = file['q'][quality] or next
       begin
-        ffprobe_xml = Nokogiri::XML(derivative['ffprobe'])
+        ffprobe_selected = derivative['ffprobe'] || file['q']['prod']['ffprobe'] || file['q']['mezz']['ffprobe']
+        ffprobe_xml = Nokogiri::XML(ffprobe_selected)
         audio_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'audio\'][disposition/@default=\'1\']').first
         audio_stream ||= ffprobe_xml.xpath('//stream[@codec_type=\'audio\']').first || {}
         video_stream =   ffprobe_xml.xpath('//stream[@codec_type=\'video\'][disposition/@default=\'1\']').first
