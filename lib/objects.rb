@@ -381,8 +381,8 @@ class Objects
     fields[:title] = object[:json][:metadata]['call_number'] || 'Unknown' if fields[:title] == ''
     fields[:creator] = ['MDPI']
     # TODO: Stick me in a block
-    datesIssued = mods.xpath('/mods/originInfo/dateIssued')
-    dateIssued = datesIssued[0] if dates.size > 0
+    dateIssued = mods.xpath('/mods/originInfo/dateIssued')
+    dateIssued = dateIssued[0] if dateIssued.size > 0
     fields[:date_issued] = dateIssued.text
     fields[:date_issued] = '19uu' if fields[:date_issued] == ''
 
