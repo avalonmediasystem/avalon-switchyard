@@ -44,6 +44,7 @@ configure do
   set :max_sleep_seconds, 0.2 unless settings.production?
   loader = SwitchyardConfiguration.new
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
+  set :switchyard_log, Logger.new("log/#{ENV['RACK_ENV']}.log")
 end
 
 helpers do
