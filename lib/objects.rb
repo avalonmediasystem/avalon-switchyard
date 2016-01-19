@@ -382,7 +382,7 @@ class Objects
     fields[:creator] = ['MDPI']
     # TODO: Stick me in a block
     datesIssued = mods.xpath('/mods/originInfo/dateIssued')
-    dateIssued = dates[0] if dates.size > 0
+    dateIssued = datesIssued[0] if dates.size > 0
     fields[:date_issued] = dateIssued.text
     fields[:date_issued] = '19uu' if fields[:date_issued] == ''
 
