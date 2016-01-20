@@ -33,8 +33,9 @@ class Objects
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       Sinatra::Application.settings.switchyard_log.info "Posting\n\n #{payload} \n\nto #{post_path}"
       resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
-      Sinatra::Application.settings.switchyard_log.info "#{resp}"
+      Sinatra::Application.settings.switchyard_log.info resp
     end
+    $log.debug "Posting MediaObject response: #{resp}"
     object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
@@ -61,9 +62,10 @@ class Objects
     put_path = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
     resp = ''
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      Sinatra::Application.settings.switchyard_log.info "Updating\n\n #{payload} \n\nto #{put_path}"
+      Sinatra::Application.settings.switchyard_log.info "Updating\n\n #{payload} \n\nto #{post_path}"
       resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
+    $log.debug "Updating MediaObject response: #{resp}"
     object_error_and_exit(object, "Failed to update media object in Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
@@ -342,7 +344,6 @@ class Objects
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
     update_status(object[:json][:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
-    Sinatra::Application.settings.switchyard_log.info "#{object} failed #{message}"
     fail "error with #{object[:json][:group_name]}, see database record"
   end
 
