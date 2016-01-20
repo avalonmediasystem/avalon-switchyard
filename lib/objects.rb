@@ -380,6 +380,7 @@ class Objects
     fields[:title] = mods.xpath('/mods/titleInfo/title').text
     fields[:title] = object[:json][:metadata]['call_number'] || 'Untitled' if fields[:title] == ''
     fields[:creator] = ['Unknown']
+    fields[:creator] = get_creators(mods)
     # TODO: Stick me in a block
     begin
       fields[:date_issued] = mods.xpath("/mods/originInfo/dateIssued[@encoding='marc']")[0].text
@@ -425,6 +426,20 @@ class Objects
     rescue
       object_error_and_exit(object, 'failed to parse mods as XML')
     end
+  end
+
+  # Gets the contributors, or appriorate default value, from the models
+  #
+  # @param mods [Nokogiri::XML::Document]  the mods for the object
+  # @return [Array] an array of all contributors 
+  def get_creators(mods)
+    name_nodes = mods.xpath('/mods/name')
+    return ['See Other contributors'] if name_nodes.nil? || name_nodes.size < 1
+    contributors = []
+    name_nodes.each do |name_node|
+      contributors << name_node.xpath('/namePart')[0].text if name_node.xpath('/role').text.downcase == 'creator'
+    end
+    contributors
   end
 
   # Gets the file format from the mods, writes an error and terminates if the file format cannot be found
