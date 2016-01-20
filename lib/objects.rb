@@ -384,9 +384,9 @@ class Objects
     # TODO: Stick me in a block
     begin
       fields[:date_issued] = mods.xpath("/mods/originInfo/dateIssued[@encoding='marc']")[0].text
-      fields[:date_issued] = '19uu' if fields[:date_issued] == ''
+      fields[:date_issued] = 'unknown/unknown' if fields[:date_issued] == ''
     rescue
-      fields[:date_issued] = '19uu'
+      fields[:date_issued] = 'unknown/unknown'
     end
 
     # Check for a creation date
@@ -431,7 +431,7 @@ class Objects
   # Gets the contributors, or appriorate default value, from the models
   #
   # @param mods [Nokogiri::XML::Document]  the mods for the object
-  # @return [Array] an array of all contributors 
+  # @return [Array] an array of all contributors
   def get_creators(mods)
     name_nodes = mods.xpath('/mods/name')
     return ['See Other contributors'] if name_nodes.nil? || name_nodes.size < 1
