@@ -379,7 +379,6 @@ class Objects
     # Check for the default fields we need, we may only have these if a machine generated mods
     fields[:title] = mods.xpath('/mods/titleInfo/title').text
     fields[:title] = object[:json][:metadata]['call_number'] || 'Untitled' if fields[:title] == ''
-    fields[:creator] = ['Unknown']
     fields[:creator] = get_creators(mods)
     # TODO: Stick me in a block
     begin
@@ -439,7 +438,7 @@ class Objects
     name_nodes.each do |name_node|
       contributors << name_node.xpath('/namePart')[0].text if name_node.xpath('/role').text.downcase == 'creator'
     end
-    contributors
+    contributors.present? ? contributors : ['Unknown']
   end
 
   # Gets the file format from the mods, writes an error and terminates if the file format cannot be found
