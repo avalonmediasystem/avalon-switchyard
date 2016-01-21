@@ -336,6 +336,27 @@ describe 'creation of media objects' do
           expect(fields.keys.include? :bibliographic_id).to be_truthy
           expect(fields[:bibliographic_id]).not_to be_nil
         end
+        it 'should parse to "See other contributors" if no creator but other contributors provided' do
+          #Use a fixture that has a catalog key
+          @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00104460.txt'))
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields.keys.include? :creator).to be_truthy
+          expect(fields[:creator]).to eq 'See other contributors'
+        end
+        it 'should parse creator if provided' do
+          #Use a fixture that has a catalog key
+          @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00034889.txt'))
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields.keys.include? :creator).to be_truthy
+          expect(fields[:creator]).to eq 'Indiana University Philharmonic Orchestra.'
+        end
+        it 'should parse to "Unknown" if no creator or other contributors provided' do
+          #Use a fixture that has a catalog key
+          @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00063679.txt'))
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields.keys.include? :creator).to be_truthy
+          expect(fields[:creator]).to eq 'Unknown'
+        end
       end
 
       describe 'routing an object and determining collection' do
