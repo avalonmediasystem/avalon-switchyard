@@ -433,12 +433,15 @@ class Objects
   # @return [Array] an array of all contributors
   def get_creator(mods)
     name_nodes = mods.xpath('/mods/name')
-    return ['See Other contributors'] if name_nodes.nil? || name_nodes.size < 1
     contributors = []
+    creators = []
     name_nodes.each do |name_node|
-      contributors << name_node.xpath('/namePart')[0].text if name_node.xpath('/role').text.downcase == 'creator'
+      contributors << name_node.xpath('namePart')[0].text if name_node.xpath('role/roleTerm').text.downcase == 'contributor'
+      creators << name_node.xpath('namePart')[0].text if name_node.xpath('role/roleTerm').text.downcase == 'creator'
     end
-    contributors.present? ? contributors.first : 'Unknown'
+    return creators.first if creators.present?
+    return 'See other contributors' if contributors.present?
+    return 'Unknown'
   end
 
   # Gets the file format from the mods, writes an error and terminates if the file format cannot be found
