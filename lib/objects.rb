@@ -436,8 +436,8 @@ class Objects
     contributors = []
     creators = []
     name_nodes.each do |name_node|
-      contributors << name_node.xpath('namePart')[0].text if name_node.xpath('role/roleTerm').text.downcase == 'contributor'
-      creators << name_node.xpath('namePart')[0].text if name_node.xpath('role/roleTerm').text.downcase == 'creator'
+      contributors << name_node.xpath('namePart')[0].text if name_node.xpath('role/roleTerm[@type="text"]').text.downcase == 'contributor'
+      creators << name_node.xpath('namePart')[0].text if name_node.xpath('role/roleTerm[@type="text"]').text.downcase == 'creator'
     end
     return creators.first if creators.present?
     return 'See other contributors' if contributors.present?
