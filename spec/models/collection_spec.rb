@@ -87,4 +87,16 @@ describe 'collection management' do
       expect(Collection.lookup_fullname('none')).to eq 'none'
     end
   end
+
+  describe 'collection creation errors' do
+    before :all do
+      @data= {name: 'test', unit: 'test', managers: ['test1@example.edu', 'test2@example.edu'], fullname: 'A human readable unit name'}
+    end
+
+    it 'captures a 422 error and logs it' do
+      stub_request(:post, "https://test.edu/admin/collections").to_return(:status => 422)
+      expect(Sinatra::Application.settings.switchyard_log).to receive(:error).at_least(:once)
+      expect{ @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], url: 'https://test.edu') }.to raise_error(RuntimeError)
+    end
+  end
 end

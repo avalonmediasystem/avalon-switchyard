@@ -98,12 +98,18 @@ class Collection < ActiveRecord::Base
              }
     post_path = routing_target[:url] + '/admin/collections'
     resp = ''
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    handler = Proc.new do |exception, attempt, total_delay|
+      message = "Error creating collection using #{routing_target} and posting #{payload}, recieved #{exception.message} on attempt #{attempt}"
+      Sinatra::Application.settings.switchyard_log.error message
+      if attempt == Sinatra::Application.settings.max_retries
+        fail message
+      end
+    end
+    with_retries(handler: handler, max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     result = JSON.parse(resp.body).symbolize_keys
-
-    fail "recieved an error #{result[:error]} when attempting to create collection #{payload} in Avalon #{@post_path}" unless result[:error].nil?
+    fail "Error recieved when creating collection #{payload}, #{result}" unless result[:error].nil?
     save_collection_in_database(name, result[:id], routing_target[:url], fullname)
     result[:id]
   end
