@@ -58,12 +58,17 @@ class Collection < ActiveRecord::Base
   # @param [Hash] routing_target the Avalon information loaded by Router
   # @return [String] the pid of the collection
   def get_or_create_collection_pid(object, routing_target)
+    #byebug
     name = object[:json][:metadata]['unit']
     info = collection_information(name, routing_target[:url])
     unless info[:exists]
       # TODO: Make this smarter for how it selects managers and names the collection_object
       # Currently name is used for both unit and collection name and default managers are always loaded (via passing nil)
-      post_new_collection(name, name, managers_for_object(object), routing_target)
+      begin
+        post_new_collection(name, name, managers_for_object(object), routing_target)
+      rescue
+        Objects.new.object_error_and_exit(object, "could not create collection in target avalon: #{routing_target[:url]}")
+      end
       info = collection_information(name, routing_target[:url])
     end
     info[:pid]
