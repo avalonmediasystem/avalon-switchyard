@@ -8,7 +8,7 @@
 
 ## About
 
-Avalon Switchyard is a Sinatra Ruby application written to route content between multiple instances of the Avalon Media System.  Switchyard is designed to receive JSON data from an external source, such as a digitization lab, and then determine the proper Avalon instance to create the media object in.  Avalon Switchyard will then generate the proper API call to post the media object.  If necessary it will also create a collection to contain the media object.
+Avalon Switchyard is a Sinatra Ruby application written to route content between multiple instances of the Avalon Media System within the same institution.  Switchyard is designed to receive JSON data from an external source, such as a digitization lab, and then determine the proper Avalon instance to create the media object in.  Avalon Switchyard will then generate the proper API call to post the media object to the selected Avalon instance.  If necessary it will also create a collection to contain the media object.
 
 
 ## Installing Avalon Switchyard for Development
@@ -33,7 +33,9 @@ Alternatively you can add in byebug where desired throughout the application.  W
 
 ## Deploying Avalon Switchyard
 
-TODO, IU folks see internal wiki
+IU folks see internal wiki for institution specifics.
+
+Switchyard is configured to deployed as a Rack application using Capistrano currently.  You will need to make changes to `config.ru` and `config/deploy.rb` as required by your production environment.  Currently Switchyard will attempt to install itself to `/var/www/switchyard`.  A Capistrano deploy can be executed via `bundle exec cap production deploy`.
 
 ## Authorizing Services to Use Avalon Switchyard
 
@@ -61,6 +63,8 @@ No authorization is required.  This request returns an http status of 200 and in
 This route requires authorization to be submitted in the header using the param `api_token`.  See _Authorizing Services to Use Avalon Switchyard_ for information on generating a valid token.  To post to this route use the style of:
 
 `post /media_objects/create, content, api_token: token`
+
+For specifics on how to format the content as json, see `spec/fixtures/sample_objects`.  Each file in that directory is an example of valid sample content formatted as JSON.  
 
 ### get /media_objects/status/:group_name
 
@@ -99,9 +103,5 @@ All media_objects functions respond in the same manner.  Their responses are:
   - This applies only to `post /media_objects/create, content, api_token: token`
   - HTTP Code: 400
   - Response Body: json in the form of `{ status: '400', error: true, message: STRING}`
-* Resource Not Found
-  - This applies only to `get /media_objects/status/:group_name`
-  - HTTP Code: 404
-  - Response Body: json in the form of `{error: true, message: 'Record not found'}`
 
 For further information routes see `switchyard.rb` and for media_object values see `lib/objects.rb`
