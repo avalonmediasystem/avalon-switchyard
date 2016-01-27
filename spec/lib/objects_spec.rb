@@ -336,6 +336,13 @@ describe 'creation of media objects' do
           expect(fields.keys.include? :bibliographic_id).to be_truthy
           expect(fields[:bibliographic_id]).not_to be_nil
         end
+        it 'should have a call number if provided' do
+          #Use a fixture that has a call number
+          @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00034889.txt'))
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields[:other_identifier_type].include? 'call number').to be_truthy
+          expect(fields[:other_identifier].size).to eq fields[:other_identifier_type].size
+        end
         it 'should parse to "See other contributors" if no creator but other contributors provided' do
           #Use a fixture that has a catalog key
           @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00104460.txt'))

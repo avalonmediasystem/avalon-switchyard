@@ -402,6 +402,11 @@ class Objects
     fields[:other_identifier] = [object[:json][:group_name]]
     fields[:other_identifier_type] = ['mdpi group']
 
+    if object[:json][:metadata]['call_number']
+      fields[:other_identifier] += [object[:json][:metadata]['call_number']]
+      fields[:other_identifier_type] += ["call number"]
+    end
+
     fields
   end
 
