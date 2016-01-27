@@ -58,12 +58,17 @@ class Collection < ActiveRecord::Base
   # @param [Hash] routing_target the Avalon information loaded by Router
   # @return [String] the pid of the collection
   def get_or_create_collection_pid(object, routing_target)
+    #byebug
     name = object[:json][:metadata]['unit']
     info = collection_information(name, routing_target[:url])
     unless info[:exists]
       # TODO: Make this smarter for how it selects managers and names the collection_object
       # Currently name is used for both unit and collection name and default managers are always loaded (via passing nil)
-      post_new_collection(name, name, managers_for_object(object), routing_target)
+      begin
+        post_new_collection(name, name, managers_for_object(object), routing_target)
+      rescue
+        Objects.new.object_error_and_exit(object, "could not create collection in target avalon: #{routing_target[:url]}")
+      end
       info = collection_information(name, routing_target[:url])
     end
     info[:pid]
@@ -98,12 +103,18 @@ class Collection < ActiveRecord::Base
              }
     post_path = routing_target[:url] + '/admin/collections'
     resp = ''
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    handler = Proc.new do |exception, attempt, total_delay|
+      message = "Error creating collection using #{routing_target} and posting #{payload}, recieved #{exception.message} on attempt #{attempt}"
+      Sinatra::Application.settings.switchyard_log.error message
+      if attempt == Sinatra::Application.settings.max_retries
+        fail message
+      end
+    end
+    with_retries(handler: handler, max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     result = JSON.parse(resp.body).symbolize_keys
-
-    fail "recieved an error #{result[:error]} when attempting to create collection #{payload} in Avalon #{@post_path}" unless result[:error].nil?
+    fail "Error recieved when creating collection #{payload}, #{result}" unless result[:error].nil?
     save_collection_in_database(name, result[:id], routing_target[:url], fullname)
     result[:id]
   end
