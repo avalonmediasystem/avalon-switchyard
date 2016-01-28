@@ -25,17 +25,16 @@ Avalon Switchyard is a Sinatra Ruby application written to route content between
 
 To launch a debug console navigate to the root of Avalon Switchyard and run:
 
-1. `irb`
-1. `require './switchyard.rb'`
+    irb -r './switchyard.rb'
 
-Alternatively you can add in byebug where desired throughout the application.  When debugging via either method you can reach application settings thought `Sinatra::Application.settings`.  See the `configure` block of `switchyard.rb` for further documentation.
+Alternatively you can add in byebug where desired throughout the application.  When debugging via either method you can reach application settings through `Sinatra::Application.settings`.  See the `configure` block of `switchyard.rb` for further documentation.
 
 
 ## Deploying Avalon Switchyard
 
 IU folks see internal wiki for institution specifics.
 
-Switchyard is configured to deployed as a Rack application using Capistrano currently.  You will need to make changes to `config.ru` and `config/deploy.rb` as required by your production environment.  Currently Switchyard will attempt to install itself to `/var/www/switchyard`.  A Capistrano deploy can be executed via `bundle exec cap production deploy`.
+Switchyard is configured to deployed as a Rack application using Capistrano.  You will need to make changes to `config.ru` and `config/deploy.rb` as required by your production environment.  Currently Switchyard will attempt to install itself to `/var/www/switchyard`.  A Capistrano deploy can be executed via `bundle exec cap production deploy`.
 
 ## Authorizing Services to Use Avalon Switchyard
 
