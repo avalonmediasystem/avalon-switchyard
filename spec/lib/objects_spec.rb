@@ -340,7 +340,7 @@ describe 'creation of media objects' do
           #Use a fixture that has a call number
           @object = @media_object.parse_request_body(load_sample_obj(filename: 'GR00034889.txt'))
           fields = @media_object.get_fields_from_mods(@object)
-          expect(fields[:other_identifier_type].include? 'call number').to be_truthy
+          expect(fields[:other_identifier_type].include? 'other').to be_truthy
           expect(fields[:other_identifier].size).to eq fields[:other_identifier_type].size
         end
         it 'should parse to "See other contributors" if no creator but other contributors provided' do

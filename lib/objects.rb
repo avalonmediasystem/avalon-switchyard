@@ -400,11 +400,11 @@ class Objects
     # Get the CatKey if we have one
     fields[:bibliographic_id] = object[:json][:metadata]['catalog_key'] unless object[:json][:metadata]['catalog_key'].nil?
     fields[:other_identifier] = [object[:json][:group_name]]
-    fields[:other_identifier_type] = ['mdpi group']
+    fields[:other_identifier_type] = ['other']
 
     if object[:json][:metadata]['call_number']
-      fields[:other_identifier] += [object[:json][:metadata]['call_number']]
-      fields[:other_identifier_type] += ["call number"]
+      fields[:other_identifier] << object[:json][:metadata]['call_number']
+      fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
     end
 
     fields
