@@ -31,13 +31,14 @@ class Objects
     post_path = routing_target[:url] + '/media_objects.json'
     resp = ''
     post_failiure = Proc.new do |exception, attempt_number, total_delay|
-      message = "Error posting new object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt}"
+      message = "Error posting new object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
       Sinatra::Application.settings.switchyard_log.error message
-      if attempt == Sinatra::Application.settings.max_retries
+      if attempt_number == Sinatra::Application.settings.max_retries
         object_error_and_exit(object, message)
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure) do
+      Sinatra::Application.settings.switchyard_log.info "Attempting to post #{post_path} #{payload}"
       resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
       Sinatra::Application.settings.switchyard_log.info resp
     end
@@ -68,9 +69,9 @@ class Objects
     put_path = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
     resp = ''
     put_failiure = Proc.new do |exception, attempt_number, total_delay|
-      message = "Error updating object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt}"
+      message = "Error updating object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
       Sinatra::Application.settings.switchyard_log.error message
-      if attempt == Sinatra::Application.settings.max_retries
+      if attempt_number == Sinatra::Application.settings.max_retries
         object_error_and_exit(object, message)
       end
     end
