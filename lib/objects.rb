@@ -30,7 +30,14 @@ class Objects
     payload = transform_object(object)
     post_path = routing_target[:url] + '/media_objects.json'
     resp = ''
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    post_failiure = Proc.new do |exception, attempt_number, total_delay|
+      message = "Error posting new object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt}"
+      Sinatra::Application.settings.switchyard_log.error message
+      if attempt == Sinatra::Application.settings.max_retries
+        object_error_and_exit(object, message)
+      end
+    end
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure) do
       resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
       Sinatra::Application.settings.switchyard_log.info resp
     end
@@ -60,7 +67,14 @@ class Objects
     payload = payload.to_json
     put_path = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
     resp = ''
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    put_failiure = Proc.new do |exception, attempt_number, total_delay|
+      message = "Error updating object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt}"
+      Sinatra::Application.settings.switchyard_log.error message
+      if attempt == Sinatra::Application.settings.max_retries
+        object_error_and_exit(object, message)
+      end
+    end
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
       resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     $log.debug "Updating MediaObject response: #{resp}"
@@ -383,7 +397,7 @@ class Objects
     # TODO: Stick me in a block
     begin
       fields[:date_issued] = mods.xpath("/mods/originInfo/dateIssued[@encoding='marc']")[0].text
-      fields[:date_issued] = 'unknown/unknown' if fields[:date_issued] == ''
+      fields[:date_issued] = 'unknown/unknown' if fields[:date_issued] == '' || fields[:date_issued] == 'uuuu'
     rescue
       fields[:date_issued] = 'unknown/unknown'
     end
