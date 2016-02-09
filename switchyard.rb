@@ -104,7 +104,7 @@ post '/media_objects/create' do
       media_object.update_media_object(object) if already_present
     rescue Exception => e
       message = "Failed to send object #{object} to Avalon, exited wit exception #{e}"
-      settings.switchyard_log.info
+      settings.switchyard_log.info message
       media_object.object_error_and_exit(object, message)
     end
   end
