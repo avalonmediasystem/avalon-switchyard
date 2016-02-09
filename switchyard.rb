@@ -99,8 +99,14 @@ post '/media_objects/create' do
   end
   stream do |out|
     out << status.to_json # return the initial status so MDPI has some response and then keep working
-    media_object.post_new_media_object(object) unless already_present
-    media_object.update_media_object(object) if already_present
+    begin
+      media_object.post_new_media_object(object) unless already_present
+      media_object.update_media_object(object) if already_present
+    rescue Exception => e
+      message = "Failed to send object #{object} to Avalon, exited wit exception #{e}"
+      settings.switchyard_log.info
+      media_object.object_error_and_exit(object, message)
+    end
   end
 
 end
