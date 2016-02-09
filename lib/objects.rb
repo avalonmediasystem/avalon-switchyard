@@ -27,7 +27,14 @@ class Objects
   # @param [Hash] object the object as deposited in Switchyard
   def post_new_media_object(object)
     routing_target = attempt_to_route(object)
-    payload = transform_object(object)
+    payload = ''
+    begin
+      payload = transform_object(object)
+      Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object} to #{payload}"
+    rescue Exception => e
+      message = "Failed to transform object #{object}, exception #{e}"
+      object_error_and_exit(object, message)
+    end
     post_path = routing_target[:url] + '/media_objects.json'
     resp = ''
     post_failiure = Proc.new do |exception, attempt_number, total_delay|
