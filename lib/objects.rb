@@ -30,7 +30,7 @@ class Objects
     payload = ''
     begin
       payload = transform_object(object)
-      Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object} to #{payload}"
+      Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
     rescue Exception => e
       message = "Failed to transform object #{object}, exception #{e}"
       object_error_and_exit(object, message)
