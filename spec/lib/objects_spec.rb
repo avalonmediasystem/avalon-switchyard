@@ -299,8 +299,48 @@ describe 'creation of media objects' do
     end
 
     describe 'obtaining field information for an object' do
+      describe 'determing oclc numbers' do
+        it 'returns nil when passed a non string' do
+          non_strings = [nil, 1, 1.2, ['foo']]
+          non_strings.each do |item|
+            expect(@media_object.parse_oclc_field(item)).to be_nil
+          end
+        end
+        it 'returns nil when a string of numbers and non numbers is passed in' do
+          mixed_strings = ['foo1', '1foo', 'fo10', '.foo1', 'foo1.']
+          mixed_strings.each do |item|
+            expect(@media_object.parse_oclc_field(item)).to be_nil
+          end
+        end
+        it 'returns a string with an ocm prefix when eight digits are passed in' do
+          passed_val = '12345678'
+          result_expected = 'ocm12345678'
+          expect(@media_object.parse_oclc_field(passed_val)).to match(result_expected)
+        end
+        it 'returns a string with an ocn prefix when nine digits are passed in' do
+          passed_val = '123456789'
+          result_expected = 'ocn123456789'
+          expect(@media_object.parse_oclc_field(passed_val)).to match(result_expected)
+        end
+        it 'returns a string with an oc prefix when ten digits are passed in' do
+          passed_val = '1234567890'
+          result_expected = 'oc1234567890'
+          expect(@media_object.parse_oclc_field(passed_val)).to match(result_expected)
+        end
+        it 'returns a string with an oc prefix when more than ten digits are passed in' do
+          passed_val = '123456789012'
+          result_expected = 'oc123456789012'
+          expect(@media_object.parse_oclc_field(passed_val)).to match(result_expected)
+        end
+        it 'right pads the ocm number with zeros when less than eight digits are passed in' do
+          passed_val = '45678'
+          result_expected = 'ocm00045678'
+          expect(@media_object.parse_oclc_field(passed_val)).to match(result_expected)
+        end
+      end
+
       describe 'parsing mods' do
-        it 'it can parse the mods' do
+        it 'can parse the mods' do
           expect(@media_object.parse_mods(@object).class).to eq(Nokogiri::XML::Document)
         end
 

@@ -432,6 +432,13 @@ class Objects
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
     end
 
+
+    oclc_number = parse_oclc_field(object[:json][:metadata]['oclc_number'])
+    unless oclc_number.nil?
+      fields[:other_identifier] << oclc_number
+      fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
+    end
+
     fields
   end
 
@@ -506,6 +513,31 @@ class Objects
       value.to_i
     end
     milliseconds
+  end
+
+  # Determine if the data entered into the OCLC Field is usable and return a properly formatted OCLC number if it is
+  # This is somewhat IU specific in that for us the OCLC Field was often treated as a free text field by data entry and thus is not always trustworthy
+  # @param [String] field_value The information supplied for OCLC number
+  # @return [String] the oclc number
+  # @return [nil] returned when no number can be calculated
+  def parse_oclc_field(field_value)
+    # Strip all spaces and make sure it is numbers only
+    return nil unless field_value.class == String
+    field_value = field_value.gsub(/\s+/, '')
+    # Calling to_i on string with a mixture of alpha and numbers returns any leading numbers in the string
+    # "ab123".to_i returns 0
+    # "123abc456".to_i returns 123
+    # So if the entire value is numbers the size will not change
+    oclc_val = nil
+    if field_value.to_i.to_s.size == field_value.size
+      oclc_val = 'oc'
+      oclc_val << 'm' if field_value.size <= 8
+      oclc_val << 'n' if field_value.size == 9
+      # If the number is not at least 8 digits long, pad with leading zeros
+      field_value = '0' + field_value while field_value.size < 8
+      oclc_val << field_value
+    end
+    oclc_val
   end
 
 end
