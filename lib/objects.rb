@@ -424,6 +424,9 @@ class Objects
     fields[:other_identifier] = [object[:json][:group_name]]
     fields[:other_identifier_type] = ['other']
 
+    # Add in the Physical Description (what the item was such as Betamax, etc, not what is now (mp4))
+    fields[:physical_description] = object[:json][:metadata]['format'] unless object[:json][:metadata]['format'].nil?
+
     if object[:json][:metadata]['call_number']
       fields[:other_identifier] << object[:json][:metadata]['call_number']
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
