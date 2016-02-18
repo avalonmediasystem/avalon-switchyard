@@ -84,8 +84,9 @@ post '/media_objects/create' do
   media_object = Objects.new
   # Parse the request and throw a 400 code if bad data was posted in
   posted_content = request.body.read
+  settings.switchyard_log.info "Recieved request #{posted_content}"
   object = media_object.parse_request_body(posted_content)
-  settings.switchyard_log.info "Recieved request #{posted_content} and parsed as #{object}"
+  settings.switchyard_log.info "Parsed #{object}"
   halt 400, { status: '400', error: true, message: object[:status][:error] }.to_json unless object[:status][:valid] # halt if the provided data is incorrect
   already_present = media_object.already_exists_in_avalon?(object)
   registration_results = media_object.register_object(object)
