@@ -100,7 +100,8 @@ class Collection < ActiveRecord::Base
     payload = {name: fullname,
                description: "Avalon Switchyard Created Collection for #{unit}",
                unit: fullname,
-               managers: managers
+               managers: managers,
+               default_read_groups: populate_read_group(name)
              }
     post_path = routing_target[:url] + '/admin/collections'
     resp = ''
@@ -118,5 +119,13 @@ class Collection < ActiveRecord::Base
     fail "Error recieved when creating collection #{payload}, #{result}" unless result[:error].nil?
     save_collection_in_database(name, result[:id], routing_target[:url], fullname)
     result[:id]
+  end
+
+  # Determines the proper IU specific ADS group to give read only access to a collection_object
+  # @param String unit_short_name The short name of the unit such as B-ATM, B-MUSIC, etc
+  # @return String the full read group name
+  def populate_read_group(unit_short_name)
+    prefix = 'BL-LDLP-MDPI-MANAGERS-'
+    prefix + unit_short_name
   end
 end
