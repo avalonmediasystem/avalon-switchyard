@@ -119,11 +119,6 @@ describe 'Kinsey Tests' do
     object = @object.parse_request_body(load_fail_object('GRKinseyFail.txt'))
     expect(@object).to receive(:object_error_and_exit).with(object, 'Kinsey Item').at_least(:once).and_raise(RuntimeError)
     expect{@collection.get_or_create_collection_pid(object, {})}.to raise_error(RuntimeError)
-
-
-    # expect()
-    # expect
-
   end
 
 end
