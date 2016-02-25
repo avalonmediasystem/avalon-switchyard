@@ -233,6 +233,7 @@ class Objects
     final = { fields: fields, files: files, collection_id: collection_id }
 #FIXME!!!!
     final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
+    final[:publish] = true # publish files on dark avalon by default
     return final.to_json
   end
 
