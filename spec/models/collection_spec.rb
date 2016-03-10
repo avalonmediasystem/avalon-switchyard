@@ -57,16 +57,16 @@ describe 'collection management' do
 
     it 'attempts to create the collection via post' do
       stub_request(:post, "https://test.edu/admin/collections").
-        with(:body => {"admin_collection"=>{"name"=>"A human readable unit name", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"A human readable unit name", "managers"=>["test1@example.edu", "test2@example.edu"] , "default_read_groups"=>"BL-LDLP-MDPI-MANAGERS-test"}},
-             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'364', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+        with(:body => {"admin_collection"=>{"name"=>"A human readable unit name", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"A human readable unit name", "managers"=>["test1@example.edu", "test2@example.edu"] , "default_read_groups"=>["BL-LDLP-MDPI-MANAGERS-test"]}},
+             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'366', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
         to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
       @collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', api_token: 'foo'})
     end
 
     it 'forms a post request properly' do
       stub_request(:post, "https://test.edu/admin/collections").
-        with(:body => {"admin_collection"=>{"name"=>"A human readable unit name", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"A human readable unit name", "managers"=>["test1@example.edu", "test2@example.edu"], "default_read_groups"=>"BL-LDLP-MDPI-MANAGERS-test"}},
-             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'364', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
+        with(:body => {"admin_collection"=>{"name"=>"A human readable unit name", "description"=>"Avalon Switchyard Created Collection for test", "unit"=>"A human readable unit name", "managers"=>["test1@example.edu", "test2@example.edu"], "default_read_groups"=>["BL-LDLP-MDPI-MANAGERS-test"]}},
+             :headers => {'Accept'=>'application/json', 'Accept-Encoding'=>'gzip, deflate', 'Avalon-Api-Key'=>'foo', 'Content-Length'=>'366', 'Content-Type'=>'application/x-www-form-urlencoded', 'User-Agent'=>'Ruby'}).
         to_return(:status => 200, :body => "#{{id: 'pid'}.to_json}", :headers => {})
 
       expect(@collection.post_new_collection(@data[:name], @data[:unit], @data[:managers], {url: 'https://test.edu', api_token: 'foo'})).to eq('pid')
@@ -111,7 +111,7 @@ describe 'collection management' do
   describe 'default read groups' do
     it 'adds the prefix to the group name' do
       name = 'B-FOO'
-      expected_result = 'BL-LDLP-MDPI-MANAGERS-B-FOO'
+      expected_result = ['BL-LDLP-MDPI-MANAGERS-B-FOO']
       expect(@collection.populate_read_group(name)).to eq(expected_result)
     end
   end

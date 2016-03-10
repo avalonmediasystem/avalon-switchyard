@@ -123,9 +123,9 @@ class Collection < ActiveRecord::Base
 
   # Determines the proper IU specific ADS group to give read only access to a collection_object
   # @param String unit_short_name The short name of the unit such as B-ATM, B-MUSIC, etc
-  # @return String the full read group name
+  # @return Array the full read group name in an array
   def populate_read_group(unit_short_name)
     prefix = 'BL-LDLP-MDPI-MANAGERS-'
-    prefix + unit_short_name
+    [prefix + unit_short_name]
   end
 end
