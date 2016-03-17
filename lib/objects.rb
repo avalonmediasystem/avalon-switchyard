@@ -401,7 +401,7 @@ class Objects
 
     # Check for the default fields we need, we may only have these if a machine generated mods
     fields[:title] = mods.xpath('/mods/titleInfo/title').text
-    fields[:title] = object[:json][:metadata]['call_number'] || 'Untitled' if fields[:title] == ''
+    fields[:title] = determine_call_number(object) || 'Untitled' if fields[:title] == ''
     fields[:creator] = get_creator(mods)
     # TODO: Stick me in a block
     begin
@@ -429,8 +429,8 @@ class Objects
     # TODO: Disabled on production pending some internal meetings regarding the details on this
     # fields[:physical_description] = object[:json][:metadata]['format'] unless object[:json][:metadata]['format'].nil?
 
-    if object[:json][:metadata]['call_number']
-      fields[:other_identifier] << object[:json][:metadata]['call_number']
+    if determine_call_number(object)
+      fields[:other_identifier] << determine_call_number(object)
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
     end
 
@@ -540,6 +540,28 @@ class Objects
       oclc_val << field_value
     end
     oclc_val
+  end
+
+  # Searchs both the JSON Hash and the mods (if present) for an object's call numbers
+  # @param [Hash] the object
+  # @return [String] returns the call number as a string
+  # @return [Nil] returns nil if there is no call number
+  def determine_call_number(object)
+    # Return the one in the hash, entered by PODS, if present.
+    # Assume this is the correct one over the mods one, since the mods one is the result of an import
+    begin
+      return object[:json][:metadata]['call_number'] || get_call_number_from_mods(object)
+    rescue
+      return nil
+    end
+  end
+
+  # Checks the supplied mods from the call_number
+  # @param [Hash] the object
+  # @return [String] returns the call number as a string
+  # @return [Nil] returns nil if there is no call number
+  def get_call_number_from_mods(object)
+    parse_mods(object).mods.xpath('/mods/identifier[@displayLabel = "Call Number"]').text
   end
 
 end
