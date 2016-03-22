@@ -116,16 +116,3 @@ describe 'collection management' do
     end
   end
 end
-
-describe 'Kinsey Tests' do
-  it 'places an error state on all kinsey objects when attempting to create the collection' do
-    @collection = Collection.new
-    allow(Collection).to receive(:new).and_return(@collection)
-    @object = Objects.new
-    allow(Objects).to receive(:new).and_return(@object)
-    object = @object.parse_request_body(load_fail_object('GRKinseyFail.txt'))
-    expect(@object).to receive(:object_error_and_exit).with(object, 'Kinsey Item').at_least(:once).and_raise(RuntimeError)
-    expect{@collection.get_or_create_collection_pid(object, {})}.to raise_error(RuntimeError)
-  end
-
-end

@@ -21,6 +21,11 @@ require 'date'
 
 # Class for creating and working with media objects
 class Objects
+  def initialize(posted_content: {})
+    @posted_content = posted_content
+  end
+
+
   # Posts a new media object to an Avalon, creates the collection first if needed
   # Writes the status of the submission to the database
   #
@@ -100,15 +105,14 @@ class Objects
 
   # Takes the information posts to the API in the request body and parses it
   #
-  # @param [String] body The body of the post request
   # @return [Hash] return A parsed Hash of the request
   # @return return [Hash] :json The JSON repsentation of the object
   # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
-  def parse_request_body(body)
+  def parse_request_body
     return_hash = {}
-    return_hash[:json] = parse_json(body)
+    return_hash[:json] = parse_json
     check_request(return_hash)
   end
 
@@ -155,10 +159,9 @@ class Objects
 
   # Takes the portion of the request body and parses the JSON
   #
-  # @param [String] request_json A string that can be parsed in to json
   # @return [Hash] A json hash of the param string, if the string cannot be parsed an empty hash is returned
-  def parse_json(request_json)
-    return JSON.parse(request_json).symbolize_keys
+  def parse_json
+    return JSON.parse(@posted_content).symbolize_keys
   rescue
     return {} # just return empty hash if we can't parse the json
   end
