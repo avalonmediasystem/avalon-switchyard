@@ -112,7 +112,8 @@ class Objects
   # @return :status [String] :errors Any errors encountered, nil if valid is true
   def parse_request_body
     return_hash = {}
-    return_hash[:json] = parse_json
+    parse_json
+    return_hash[:json] = @parsed_json
     check_request(return_hash)
   end
 
@@ -142,7 +143,7 @@ class Objects
     failure_reasons = ''
 
     # Make sure we have JSON
-    if hashed_request[:json].keys.size == 0
+    if hashed_request[:json].nil? || hashed_request[:json].keys.size == 0
       failure_reasons << 'JSON could not be parsed.  '
     end
 
@@ -157,11 +158,11 @@ class Objects
     hashed_request
   end
 
-  # Takes the portion of the request body and parses the JSON
+  # Sets the instance variable @parsed_json by parsing the posting content and symbolizing the keys
   #
-  # @return [Hash] A json hash of the param string, if the string cannot be parsed an empty hash is returned
+  # @return [Hash] The parsed json with symbolized keys or {} if the parsing failed
   def parse_json
-    return JSON.parse(@posted_content).symbolize_keys
+    @parsed_json = JSON.parse(@posted_content).symbolize_keys
   rescue
     return {} # just return empty hash if we can't parse the json
   end
