@@ -23,6 +23,7 @@ require 'date'
 class Objects
   def initialize(posted_content: {})
     @posted_content = posted_content
+    @object_hash = {}
   end
 
 
@@ -111,10 +112,9 @@ class Objects
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
   def parse_request_body
-    return_hash = {}
     parse_json
-    return_hash[:json] = @parsed_json
-    check_request(return_hash)
+    @object_hash[:json] = @parsed_json
+    check_request
   end
 
   # Determines if the item already exists in an instance of avalon
@@ -134,28 +134,24 @@ class Objects
 
   # Checks the posted request for valid json, and a group name
   #
-  # @param [Hash] hashed_request The request broken up by parse_request_body
   # @return [Hash] hashed_request The posted request with additional error information
   # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
-  def check_request(hashed_request)
+  def check_request
     failure_reasons = ''
-
     # Make sure we have JSON
-    if hashed_request[:json].nil? || hashed_request[:json].keys.size == 0
+    if @object_hash[:json].nil? || @object_hash[:json].keys.size == 0
       failure_reasons << 'JSON could not be parsed.  '
-    end
-
     # Make sure we have a group_name to register, skip this if we've already found errors
-    if failure_reasons.size == 0 && (hashed_request[:json][:group_name].nil? || hashed_request[:json][:group_name].size == 0)
+    elsif failure_reasons.size == 0 && (@object_hash[:json][:group_name].nil? || @object_hash[:json][:group_name].size == 0)
       failure_reasons << 'No group_name attribute could be found in the JSON'
     end
 
     result = { valid: failure_reasons.size == 0 }
     result[:error] = failure_reasons.strip unless result[:valid]
-    hashed_request[:status] = result
-    hashed_request
+    @object_hash[:status] = result
+    @object_hash
   end
 
   # Sets the instance variable @parsed_json by parsing the posting content and symbolizing the keys

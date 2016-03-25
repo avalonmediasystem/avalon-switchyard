@@ -60,18 +60,18 @@ describe 'creation of media objects' do
         end
 
         it 'marks the status as invalid when there is no json' do
-          @valid_request[:json] = {}
-          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+          @media_object.instance_variable_set(:@object_hash, {json: {}})
+          expect(@media_object.check_request[:status][:valid]).to be_falsey
         end
 
         it 'marks the status as invalid when the group name is nil' do
-          @valid_request[:json][:group_name] = nil
-          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+          @media_object.instance_variable_set(:@object_hash, {json: {group_name: nil}})
+          expect(@media_object.check_request[:status][:valid]).to be_falsey
         end
 
         it 'marks the status as invalid when the group name is an empty string' do
-          @valid_request[:json][:group_name] = ''
-          expect(@media_object.check_request(@valid_request)[:status][:valid]).to be_falsey
+          @media_object.instance_variable_set(:@object_hash, {json: {group_name: ''}})
+          expect(@media_object.check_request[:status][:valid]).to be_falsey
         end
       end
     end
