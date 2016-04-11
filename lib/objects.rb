@@ -21,6 +21,12 @@ require 'date'
 
 # Class for creating and working with media objects
 class Objects
+  def initialize(posted_content: {})
+    @posted_content = posted_content
+    @object_hash = {}
+  end
+
+
   # Posts a new media object to an Avalon, creates the collection first if needed
   # Writes the status of the submission to the database
   #
@@ -100,16 +106,15 @@ class Objects
 
   # Takes the information posts to the API in the request body and parses it
   #
-  # @param [String] body The body of the post request
   # @return [Hash] return A parsed Hash of the request
   # @return return [Hash] :json The JSON repsentation of the object
   # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
-  def parse_request_body(body)
-    return_hash = {}
-    return_hash[:json] = parse_json(body)
-    check_request(return_hash)
+  def parse_request_body
+    parse_json
+    @object_hash[:json] = @parsed_json
+    check_request
   end
 
   # Determines if the item already exists in an instance of avalon
@@ -129,36 +134,31 @@ class Objects
 
   # Checks the posted request for valid json, and a group name
   #
-  # @param [Hash] hashed_request The request broken up by parse_request_body
   # @return [Hash] hashed_request The posted request with additional error information
   # @return return [Hash] :status A hash containing information on if the hash parsed successfully or not
   # @return :status [Boolean] :valid true if the posted request looks valid (may not be valid, but it has the keys we want)
   # @return :status [String] :errors Any errors encountered, nil if valid is true
-  def check_request(hashed_request)
+  def check_request
     failure_reasons = ''
-
     # Make sure we have JSON
-    if hashed_request[:json].keys.size == 0
+    if @object_hash[:json].nil? || @object_hash[:json].keys.size == 0
       failure_reasons << 'JSON could not be parsed.  '
-    end
-
     # Make sure we have a group_name to register, skip this if we've already found errors
-    if failure_reasons.size == 0 && (hashed_request[:json][:group_name].nil? || hashed_request[:json][:group_name].size == 0)
+    elsif failure_reasons.size == 0 && (@object_hash[:json][:group_name].nil? || @object_hash[:json][:group_name].size == 0)
       failure_reasons << 'No group_name attribute could be found in the JSON'
     end
 
     result = { valid: failure_reasons.size == 0 }
     result[:error] = failure_reasons.strip unless result[:valid]
-    hashed_request[:status] = result
-    hashed_request
+    @object_hash[:status] = result
+    @object_hash
   end
 
-  # Takes the portion of the request body and parses the JSON
+  # Sets the instance variable @parsed_json by parsing the posting content and symbolizing the keys
   #
-  # @param [String] request_json A string that can be parsed in to json
-  # @return [Hash] A json hash of the param string, if the string cannot be parsed an empty hash is returned
-  def parse_json(request_json)
-    return JSON.parse(request_json).symbolize_keys
+  # @return [Hash] The parsed json with symbolized keys or {} if the parsing failed
+  def parse_json
+    @parsed_json = JSON.parse(@posted_content).symbolize_keys
   rescue
     return {} # just return empty hash if we can't parse the json
   end
