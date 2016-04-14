@@ -81,6 +81,7 @@
       "call_number" : "DAT .B5315 A.4-17 v.1",
       "home_location" : "_MUIUTP",
       "title_control_number" : "a4835918",
+      "format":{"40000000046674":"tree bark carving","40000000046666":"cave painting"},
       "audio" : "true",
       "unit" : "B-MUSIC",
       "iucat_barcode" : "30000062534072",
@@ -89,4 +90,3 @@
       "mods_source" : "IUCAT"
    }
 }
-

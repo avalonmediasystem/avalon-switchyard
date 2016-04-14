@@ -247,7 +247,7 @@ class Objects
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key]).merge({other_identifier: part['mdpi_barcode']})
+        return_array << get_file_info(object, part['files'][key], part['"mdpi_barcode']).merge({other_identifier: part['mdpi_barcode']})
       end
     end
     return_array
@@ -257,8 +257,9 @@ class Objects
   #
   # @param [Hash] object the object passed to switchyard
   # @param [String] file the representation of the file's information in a string that can be parsed as XML
+  # @param [String] the mdpi_barcode for the file
   # @return [Hash] a hash of the file ready for addition to :files
-  def get_file_info(object, file)
+  def get_file_info(object, file, mdpi_barcode)
     # TODO: Split me up further once file parsing is finalized
     file_hash = {}
 
@@ -281,6 +282,8 @@ class Objects
     offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
     file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset+2000
 
+    # Get the physical description
+    file_hash[:physical_description] = get_format(mdpi_barcode)
     # Get info for derivatives. Use highest quality derivative available for item-level values.
     file_hash[:files] = []
     quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
@@ -564,4 +567,10 @@ class Objects
     parse_mods(object).mods.xpath('/mods/identifier[@displayLabel = "Call Number"]').text
   end
 
+  # Given a barcode, return the format for that file
+  # @param [String] barcode the barcode of the file
+  # @return [String] the format of the object
+  def get_format(barcode)
+    @object_hash[:json][:metadata]['format'][barcode]
+  end
 end
