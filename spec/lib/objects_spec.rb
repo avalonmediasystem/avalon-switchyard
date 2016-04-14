@@ -185,7 +185,7 @@ describe 'creation of media objects' do
 
         describe 'parsing file info' do
           it 'can parse info for one file in an object' do
-            expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
+            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode']).class).to eq(Hash)
           end
 
           # Turn this back on once file parsing has been finalized
@@ -204,14 +204,16 @@ describe 'creation of media objects' do
 
           describe 'checking specific fixtures' do
             it 'returns correctly parsed file info' do
-              @sobject = Objects.new(posted_content: load_sample_obj(filename: 'GR00104460.txt')).parse_request_body
+              obj= Objects.new(posted_content: load_sample_obj(filename: 'GR00104460.txt'))
+              @sobject = obj.parse_request_body
               @file_info = @sobject[:json][:parts][0]['files']['1']
-              @parsed_info = @media_object.get_file_info(@sobject, @file_info)
+              @parsed_info = obj.get_file_info(@sobject, @file_info,@sobject[:json][:parts][0]['mdpi_barcode'])
 
               @fixture_info = {
                 workflow_name: "avalon",
                 percent_complete: "100.0",
                 percent_succeeded: "100.0",
+                :physical_description => "these are not the droids you are looking for",
                 percent_failed: "0",
                 status_code: "COMPLETED",
                 structure: "<?xml version=\"1.0\" ?>\n<Item label=\"Betacam 1/1 Side 1 (40000000693483)\">\n  <Span label=\"Segment 1\" begin=\"00:00:00.000\" end=\"00:01:56.290\"/>\n  <Span label=\"Segment 2\" begin=\"00:01:58.457\" end=\"00:02:28.323\"/>\n</Item>",
@@ -269,7 +271,7 @@ describe 'creation of media objects' do
 
         end
 	it 'can parse info for one file in an object' do
-	  expect(@media_object.get_file_info(@object, @file_info).class).to eq(Hash)
+	  expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode']).class).to eq(Hash)
 	end
 
 	# Turn this back on once file parsing has been finalized
