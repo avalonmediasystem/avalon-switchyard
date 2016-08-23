@@ -50,7 +50,7 @@ class Objects
         object_error_and_exit(object, message)
       end
     end
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure) do
       Sinatra::Application.settings.switchyard_log.info "Attempting to post #{post_path} #{payload}"
       resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
       Sinatra::Application.settings.switchyard_log.info resp
@@ -88,7 +88,7 @@ class Objects
         object_error_and_exit(object, message)
       end
     end
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
       resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     $log.debug "Updating MediaObject response: #{resp}"
@@ -176,7 +176,7 @@ class Objects
     #destroy_object(object[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
     changes = {status: 'received', error: false, message: 'object received', last_modified: t}
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       #MediaObject.create(group_name: object[:json][:group_name], status: 'received', error: false, message: 'object received', created: current_object[:created] || t, last_modified: t, avalon_chosen: current_object[:avalon_chosen] || '', avalon_pid: current_object[:avalon_pid] || '', avalon_url: current_object[:avalon_url] || '', locked: false) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       MediaObject.create(group_name: object[:json][:group_name], created: t) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       update_status(object[:json][:group_name], changes)
@@ -193,7 +193,7 @@ class Objects
   # @return results [Boolean] :success true if successfull, false if not
   # @return results [String] :group_name the group_name of the object created, only return if deletion was successfull
   def destroy_object(group_name)
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       MediaObject.destroy_all(group_name: group_name)
       return { success: true, group_name: group_name }
     end
@@ -206,7 +206,7 @@ class Objects
   # @param [String] group_name The group_name of the object
   # @return [Hash] A hash of the obj's SQL row formatted for json or the error
   def object_status_as_json(group_name)
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       obj = MediaObject.find_by(group_name: group_name)
       rv = { success: false, error: 404, message: 'object not found in database' }
       rv = JSON.parse(obj.to_json) unless obj.nil?
@@ -356,7 +356,7 @@ class Objects
   # @param [String] The group_name of the object
   # @param [Hash] changes, the changes to make in the form of {sql_column_name: value}
   def update_status(group_name, changes)
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       obj = MediaObject.find_by(group_name: group_name)
       obj.update(changes)
     end
