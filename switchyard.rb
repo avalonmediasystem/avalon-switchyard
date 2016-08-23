@@ -40,7 +40,7 @@ configure do
   #   Sinatra::Application.settings.app_start_time #=> "2015-12-17T19:02:05Z"
   set :app_start_time, Time.now.utc.iso8601
   set :max_retries, 5
-  set :max_sleep_seconds, 5
+  set :max_sleep_seconds, 30
   set :max_sleep_seconds, 0.2 unless settings.production?
   loader = SwitchyardConfiguration.new
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
@@ -104,7 +104,8 @@ post '/media_objects/create' do
       media_object.post_new_media_object(object) unless already_present
       media_object.update_media_object(object) if already_present
     rescue Exception => e
-      message = "Failed to send object #{object} to Avalon, exited wit exception #{e}"
+
+      message = "Failed to send object #{object} to Avalon, exited with exception #{e}"
       settings.switchyard_log.error message
       settings.switchyard_log.error e.backtrace.join("\n")
       media_object.object_error_and_exit(object, message)

@@ -27,7 +27,7 @@ class Collection < ActiveRecord::Base
   # @return [Hash] result a hash continuing inforation on the collection, exists: (boolean) and pid: (string)
   def collection_information(name, url)
     query_result = nil
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       query_result = Collection.find_by(name: name, avalon_url: url)
     end
     result = { exists: !query_result.nil? }
@@ -42,7 +42,7 @@ class Collection < ActiveRecord::Base
   # @param [String] url the url of the Avalon the collection was created in
   def save_collection_in_database(name, pid, url, fullname)
     Sinatra::Application.settings.switchyard_log.info "saving collection with #{name}, #{pid}, #{url}, #{fullname}"
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       begin
         c = Collection.create(name: name, pid: pid, avalon_url: url, fullname: fullname)
         Sinatra::Application.settings.switchyard_log.info "Created collection #{name} successfully with result of #{c}"
@@ -112,7 +112,7 @@ class Collection < ActiveRecord::Base
         fail message
       end
     end
-    with_retries(handler: handler, max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    with_retries(handler: handler, max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  10, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     result = JSON.parse(resp.body).symbolize_keys
