@@ -7,4 +7,5 @@ before_script:
   - bundle exec rake db:migrate
 script: bundle exec rspec
 rvm:
-  - 2.1.7
+  - 2.2.1
+  - 2.3.1
