@@ -12,7 +12,7 @@
 #   specific language governing permissions and limitations under the License.
 # ---  END LICENSE_HEADER BLOCK  ---
 
-ruby '2.1.7'
+#ruby '2.1.7'
 source 'https://rubygems.org'
 
 # :default group gems
