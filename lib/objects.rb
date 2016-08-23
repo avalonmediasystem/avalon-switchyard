@@ -47,7 +47,7 @@ class Objects
       message = "Error posting new object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
       Sinatra::Application.settings.switchyard_log.error message
       if attempt_number == Sinatra::Application.settings.max_retries
-        object_error_and_exit(object, message)
+        Objects.new.object_error_and_exit(object, message)
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure) do
@@ -85,7 +85,7 @@ class Objects
       message = "Error updating object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
       Sinatra::Application.settings.switchyard_log.error message
       if attempt_number == Sinatra::Application.settings.max_retries
-        object_error_and_exit(object, message)
+        Objects.new.object_error_and_exit(object, message)
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
@@ -367,6 +367,7 @@ class Objects
   # @param [Hash] object the posted object in json
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
+
     update_status(object[:json][:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
     fail "error with #{object[:json][:group_name]}, see database record"
   end
