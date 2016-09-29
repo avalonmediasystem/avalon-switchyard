@@ -247,7 +247,7 @@ class Objects
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key], part['"mdpi_barcode']).merge({other_identifier: part['mdpi_barcode']})
+        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode']).merge({other_identifier: part['mdpi_barcode']})
       end
     end
     return_array
