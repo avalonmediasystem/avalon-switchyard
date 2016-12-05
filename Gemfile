@@ -28,6 +28,7 @@ group :development do
   gem 'capistrano', '>3.1.2'
   gem 'capistrano-bundler'
   gem 'highline'
+  gem 'rubocop'
 end
 
 group :test do
