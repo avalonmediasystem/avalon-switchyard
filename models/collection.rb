@@ -113,7 +113,7 @@ class Collection < ActiveRecord::Base
       end
     end
     with_retries(handler: handler, max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      resp = RestClient.post post_path, {:admin_collection => payload}, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
+      resp = RestClient::Request.execute(method: :post, url: post_path, payload: {:admin_collection => payload}, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false)
     end
     result = JSON.parse(resp.body).symbolize_keys
     fail "Error recieved when creating collection #{payload}, #{result}" unless result[:error].nil?
