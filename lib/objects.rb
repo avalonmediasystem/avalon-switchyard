@@ -24,7 +24,8 @@ class Objects
   def initialize(posted_content: {})
     @posted_content = posted_content
     @object_hash = {}
-    @timeout_in_minutes = 45 #give Avalon up to 45 minutes to create the object
+    @timeout_in_minutes = 45 # give Avalon up to 45 minutes to create the object
+    @stored_object = {} # the object we'll store in sql
   end
 
 
@@ -117,7 +118,7 @@ class Objects
   def parse_request_body
     parse_json
     @object_hash[:json] = @parsed_json
-    check_request
+    @stored_object = check_request
   end
 
   # Determines if the item already exists in an instance of avalon
