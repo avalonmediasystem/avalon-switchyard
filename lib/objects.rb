@@ -175,7 +175,7 @@ class Objects
   # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
   def register_object(object)
     t = Time.now.utc.iso8601.to_s
-    changes = { status: 'received', error: false, message: 'object received', last_modified: t, api_has: @stored_object }
+    changes = { status: 'received', error: false, message: 'object received', last_modified: t, api_hash: object.to_s }
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       MediaObject.create(group_name: object[:json][:group_name], created: t) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       update_status(object[:json][:group_name], changes)
