@@ -101,6 +101,11 @@ describe 'creation of media objects' do
       expect(@media_object.register_object(@content)).to be_truthy #run it again
     end
 
+    it 'saves the object hash' do
+        @media_object.register_object(@content) #register object so it is present
+        expect(MediaObject.where(group_name: @content[:json][:group_name]).first.api_hash).not_to be_nil
+    end
+
     it 'retries destroying an object when there is an error' do
       allow(ActiveRecord::Base).to receive(:destroy_all).and_raise(ActiveRecord::ConnectionTimeoutError)
       expect(ActiveRecord::Base).to receive(:destroy_all).exactly(Sinatra::Application.settings.max_retries).times

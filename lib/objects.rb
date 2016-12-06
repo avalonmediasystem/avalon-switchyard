@@ -24,6 +24,8 @@ class Objects
   def initialize(posted_content: {})
     @posted_content = posted_content
     @object_hash = {}
+    @timeout_in_minutes = 45 # give Avalon up to 45 minutes to create the object
+    @stored_object = {} # the object we'll store in sql
   end
 
 
@@ -52,7 +54,7 @@ class Objects
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
       Sinatra::Application.settings.switchyard_log.info "Attempting to post #{post_path} #{payload}"
-      resp = RestClient::Request.execute(method: :post, url: post_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: 300)
+      resp = RestClient::Request.execute(method: :post, url: post_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
       #resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
       Sinatra::Application.settings.switchyard_log.info resp
     end
@@ -90,7 +92,7 @@ class Objects
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
-      resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: 300)
+      resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
       #resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     $log.debug "Updating MediaObject response: #{resp}"
@@ -116,7 +118,7 @@ class Objects
   def parse_request_body
     parse_json
     @object_hash[:json] = @parsed_json
-    check_request
+    @stored_object = check_request
   end
 
   # Determines if the item already exists in an instance of avalon
@@ -172,14 +174,9 @@ class Objects
   # @return results [Boolean] :success true if successfull, false if not
   # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
   def register_object(object)
-    #current_object = {}
-    #current_object = object_status_as_json(object[:json][:group_name]) if already_exists_in_avalon?(object)
-
-    #destroy_object(object[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
-    changes = {status: 'received', error: false, message: 'object received', last_modified: t}
+    changes = { status: 'received', error: false, message: 'object received', last_modified: t, api_hash: object.to_s }
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      #MediaObject.create(group_name: object[:json][:group_name], status: 'received', error: false, message: 'object received', created: current_object[:created] || t, last_modified: t, avalon_chosen: current_object[:avalon_chosen] || '', avalon_pid: current_object[:avalon_pid] || '', avalon_url: current_object[:avalon_url] || '', locked: false) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       MediaObject.create(group_name: object[:json][:group_name], created: t) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       update_status(object[:json][:group_name], changes)
       return { success: true, group_name: object[:json][:group_name] }
