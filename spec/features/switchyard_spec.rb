@@ -113,7 +113,7 @@ describe 'Switchyard API Functionality' do
     it 'displays the status of the object' do
       get "/media_objects/status/#{@inserted_object[:json][:group_name]}", nil, 'HTTP_API_TOKEN' => @valid_token
       response = JSON.parse(last_response.body).symbolize_keys
-      expect(response.keys.size).to eq(11)
+      expect(response.keys.size).to eq(12)
     end
 
     it 'returns 200 if the object is not found' do
