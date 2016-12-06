@@ -174,14 +174,9 @@ class Objects
   # @return results [Boolean] :success true if successfull, false if not
   # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
   def register_object(object)
-    #current_object = {}
-    #current_object = object_status_as_json(object[:json][:group_name]) if already_exists_in_avalon?(object)
-
-    #destroy_object(object[:json][:group_name])
     t = Time.now.utc.iso8601.to_s
-    changes = {status: 'received', error: false, message: 'object received', last_modified: t}
+    changes = { status: 'received', error: false, message: 'object received', last_modified: t, api_has: @stored_object }
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      #MediaObject.create(group_name: object[:json][:group_name], status: 'received', error: false, message: 'object received', created: current_object[:created] || t, last_modified: t, avalon_chosen: current_object[:avalon_chosen] || '', avalon_pid: current_object[:avalon_pid] || '', avalon_url: current_object[:avalon_url] || '', locked: false) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       MediaObject.create(group_name: object[:json][:group_name], created: t) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       update_status(object[:json][:group_name], changes)
       return { success: true, group_name: object[:json][:group_name] }
