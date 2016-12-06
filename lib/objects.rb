@@ -24,6 +24,7 @@ class Objects
   def initialize(posted_content: {})
     @posted_content = posted_content
     @object_hash = {}
+    @timeout_in_minutes = 45 #give Avalon up to 45 minutes to create the object
   end
 
 
@@ -52,7 +53,7 @@ class Objects
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
       Sinatra::Application.settings.switchyard_log.info "Attempting to post #{post_path} #{payload}"
-      resp = RestClient::Request.execute(method: :post, url: post_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: 300)
+      resp = RestClient::Request.execute(method: :post, url: post_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
       #resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
       Sinatra::Application.settings.switchyard_log.info resp
     end
@@ -90,7 +91,7 @@ class Objects
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
-      resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: 300)
+      resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
       #resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
     $log.debug "Updating MediaObject response: #{resp}"
