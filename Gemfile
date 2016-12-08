@@ -22,6 +22,7 @@ gem 'sinatra-activerecord'
 gem 'rake'
 gem 'coveralls', require: false
 gem 'nokogiri'
+gem 'whenever', require: false
 
 group :development do
   gem 'byebug'
@@ -39,8 +40,10 @@ end
 
 group :development, :test do
   gem 'sqlite3'
+  gem 'rb-readline'
 end
 
 group :production do
   gem 'mysql2'
+  gem 'dotenv'
 end

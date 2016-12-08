@@ -58,7 +58,6 @@ class Objects
       #resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
       Sinatra::Application.settings.switchyard_log.info resp
     end
-    $log.debug "Posting MediaObject response: #{resp}"
     object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
@@ -95,7 +94,6 @@ class Objects
       resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
       #resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
     end
-    $log.debug "Updating MediaObject response: #{resp}"
     object_error_and_exit(object, "Failed to update media object in Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
@@ -132,7 +130,6 @@ class Objects
 
     # If the object is already on file we need to make sure it has an avalon pid in the avalon
     # we plan to send it to (since it might be on file in a different avalon)
-    $log.debug "Attemping to check match with urls of #{attempt_to_route(object)[:url]} and #{status}, #{status[:avalon_chosen]}"
     attempt_to_route(object)[:url] == status['avalon_chosen']
   end
 
@@ -175,8 +172,8 @@ class Objects
   # @return results [String] :group_name the group_name of the object created, only return if registration was succcessful
   def register_object(object)
     t = Time.now.utc.iso8601.to_s
-    changes = { status: 'received', error: false, message: 'object received', last_modified: t, api_hash: object.to_s }
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
+    changes = { status: 'received', error: false, message: 'object received', last_modified: t, api_hash: @posted_content }
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds: 0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       MediaObject.create(group_name: object[:json][:group_name], created: t) if MediaObject.find_by(group_name: object[:json][:group_name]).nil?
       update_status(object[:json][:group_name], changes)
       return { success: true, group_name: object[:json][:group_name] }
@@ -367,7 +364,7 @@ class Objects
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
 
-    update_status(object[:json][:group_name], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
+    update_status(object[:json][:group_name] || object[:json]['group_name'], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
     fail "error with #{object[:json][:group_name]}, see database record"
   end
 
@@ -572,5 +569,15 @@ class Objects
   # @return [String] the format of the object
   def get_format(barcode)
     @object_hash[:json][:metadata]['format'][barcode]
+  end
+
+  # This function queries the media_objects take and returns the oldest item in the received state
+  # @return [Hash] a hash of the active record object
+  def oldest_ready_object
+    ActiveRecord::Base.connection.execute("select * from media_objects where created = (select min(created) from media_objects where status = 'received') limit 1;").first
+  end
+
+  def set_hash(parsed_object)
+    @object_hash[:json] = parsed_object
   end
 end
