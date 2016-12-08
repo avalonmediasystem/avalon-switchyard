@@ -532,4 +532,25 @@ describe 'creation of media objects' do
       expect(@media_object.already_exists_in_avalon?({json:{group_name: 'TestingExistance'}})).to be_truthy
     end
   end
+  describe 'working on objects in the queue' do
+    it 'returns the oldest object in the queue that has status received' do
+      created = DateTime.new(2001, 1, 1).iso8601
+      MediaObject.where(created: created).destroy_all
+      m = MediaObject.new
+      m.created = created
+      m.status = 'received'
+      m.save!
+      expect(Objects.new.oldest_ready_object['id']).to eq(m.id)
+    end
+
+    it 'does not return the oldest object when the status is not received' do
+      created = DateTime.new(1987, 1, 1).iso8601
+      MediaObject.where(created: created).destroy_all
+      m = MediaObject.new
+      m.created = created
+      m.status = 'error'
+      m.save!
+      expect(Objects.new.oldest_ready_object['id']).not_to eq(m.id)
+    end
+  end
 end

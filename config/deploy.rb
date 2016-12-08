@@ -6,7 +6,6 @@ set :user, ask('Username', 'enter the username for the server')
 set :deploy_host, ask('Server', 'enter in the server you are deploying to')
 set :application, ask('Appname', 'enter the name of the app')
 set :repo_url, 'git@github.com:avalonmediasystem/avalon-switchyard.git'
-
 # Default branch is :master
 ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
@@ -27,6 +26,8 @@ set :scm, :git
 
 # Default value for :linked_files is []
 set :linked_files, %w(config/database.yml config/units.yml config/switchyard.yml config/avalons.yml)
+
+
 # set :linked_files, fetch(:linked_files, []).push('config/database.yml')
 # set :linked_files, fetch(:linked_files, []).push('config/units.yml')
 # set :linked_files, fetch(:linked_files, []).push('config/switchyard.yml')
@@ -55,6 +56,7 @@ namespace :deploy do
       execute "cd '#{release_path}'; RACK_ENV=#{fetch(:env)} bundle exec rake db:migrate"
       execute :mkdir, release_path.join('tmp')
       execute :touch, release_path.join('tmp/restart.txt')
+      execute "cd '#{release_path}'; cp config/.env.production .env" if fetch(:env) == 'production'
     end
   end
 

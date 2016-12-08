@@ -84,11 +84,10 @@ post '/media_objects/create' do
   posted_content = request.body.read
   media_object = Objects.new(posted_content: posted_content)
   # Parse the request and throw a 400 code if bad data was posted in
-  settings.switchyard_log.info "Recieved request #{posted_content}"
+  settings.switchyard_log.info "Received request #{posted_content}"
   object = media_object.parse_request_body
   settings.switchyard_log.info "Parsed #{object}"
   halt 400, { status: '400', error: true, message: object[:status][:error] }.to_json unless object[:status][:valid] # halt if the provided data is incorrect
-  already_present = media_object.already_exists_in_avalon?(object)
   registration_results = media_object.register_object(object)
   database_connection_failure! unless registration_results[:success]
 
@@ -100,15 +99,6 @@ post '/media_objects/create' do
   end
   stream do |out|
     out << status.to_json # return the initial status so MDPI has some response and then keep working
-    begin
-      media_object.post_new_media_object(object) unless already_present
-      media_object.update_media_object(object) if already_present
-    rescue Exception => e
-      message = "Failed to send object #{object} to Avalon, exited wit exception #{e}"
-      settings.switchyard_log.error message
-      settings.switchyard_log.error e.backtrace.join("\n")
-      media_object.object_error_and_exit(object, message)
-    end
   end
 
 end

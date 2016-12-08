@@ -27,4 +27,11 @@ class Router
     # For now thought, default it is:
     SwitchyardConfiguration.new.load_yaml('avalons.yml')['default'].symbolize_keys
   end
+
+  # This function determines if an item is currently locked for transmission to Avalon or not
+  #
+  # @return [Boolean] true if an item is locked (in transmission), false if it is not
+  def send_in_progress?
+    !MediaObject.where(locked: true).empty?
+  end
 end
