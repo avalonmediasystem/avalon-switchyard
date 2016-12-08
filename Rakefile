@@ -82,4 +82,38 @@ namespace :switchyard do
       end
     end
   end
+
+  task :send_batch => :dotenv do
+    unless Router.new.send_in_progress?
+      # Find the oldest object
+      objs = MediaObject.where(status: 'received')
+      unless objs.empty?
+        objs.each do |obj|
+          # Lock it so future chron tasks don't run
+          media_object = MediaObject.find(obj[0])
+          media_object.locked = true
+          media_object.last_modified = Time.now.utc.iso8601.to_s
+          media_object.save!
+
+
+          # Send It
+          new_object = media_object.avalon_pid.nil?
+          begin
+            item = Objects.new(posted_content: media_object.api_hash)
+            object = item.parse_request_body
+            item.post_new_media_object(object) if new_object
+            item.update_media_object(object) unless new_object
+          rescue Exception => e
+            media_object.error = true
+            media_object.status = 'error'
+            media_object.message = e
+            media_object.save!
+          end
+
+          media_object.locked = false
+          media_object.save!
+        end
+      end
+    end
+  end
 end
