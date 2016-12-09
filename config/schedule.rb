@@ -19,7 +19,7 @@
 
 # Learn more: http://github.com/javan/whenever
 
-every 1.minute do
+every 5.minute do
   #command 'RACK_ENV=production bundle exec rake switchyard:send_item'
-  rake 'switchyard:send_item RACK_ENV=production'
+  rake 'switchyard:send_batch RACK_ENV=production'
 end
