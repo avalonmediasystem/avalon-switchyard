@@ -90,7 +90,7 @@ namespace :switchyard do
       unless objs.empty?
         objs.each do |obj|
           # Lock it so future chron tasks don't run
-          media_object = MediaObject.find(obj[0])
+          media_object = MediaObject.find(obj.id)
           media_object.locked = true
           media_object.last_modified = Time.now.utc.iso8601.to_s
           media_object.save!
