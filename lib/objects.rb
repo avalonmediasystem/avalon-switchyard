@@ -364,7 +364,7 @@ class Objects
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
 
-    update_status(object[:json][:group_name] || object[:json]['group_name'], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601)
+    update_status(object[:json][:group_name] || object[:json]['group_name'], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601, locked: false)
     fail "error with #{object[:json][:group_name]}, see database record"
   end
 
