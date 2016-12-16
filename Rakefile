@@ -104,10 +104,12 @@ namespace :switchyard do
             item.post_new_media_object(object) if new_object
             item.update_media_object(object) unless new_object
           rescue Exception => e
-            media_object.error = true
-            media_object.status = 'error'
-            media_object.message = e
-            media_object.save!
+            unless MediaObject.find(obj.id).error
+              media_object.error = true
+              media_object.status = 'error'
+              media_object.message = e
+              media_object.save!
+            end
           end
 
           media_object.locked = false
