@@ -28,6 +28,7 @@ group :development do
   gem 'byebug'
   gem 'capistrano', '>3.1.2'
   gem 'capistrano-bundler'
+  gem 'capistrano-passenger', require: false
   gem 'highline'
   gem 'rubocop'
 end
