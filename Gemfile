@@ -23,11 +23,13 @@ gem 'rake'
 gem 'coveralls', require: false
 gem 'nokogiri'
 gem 'whenever', require: false
+gem 'dotenv'
 
 group :development do
   gem 'byebug'
   gem 'capistrano', '>3.1.2'
   gem 'capistrano-bundler'
+  gem 'capistrano-passenger', require: false
   gem 'highline'
   gem 'rubocop'
 end
@@ -43,7 +45,6 @@ group :development, :test do
   gem 'rb-readline'
 end
 
-group :production do
+group :production, optional: true do
   gem 'mysql2'
-  gem 'dotenv'
 end
