@@ -43,7 +43,7 @@ group :development, :test do
   gem 'rb-readline'
 end
 
-group :production do
+group :production, optional:true do
   gem 'mysql2'
   gem 'dotenv'
 end

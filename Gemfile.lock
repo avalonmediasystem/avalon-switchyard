@@ -51,7 +51,7 @@ GEM
     http-cookie (1.0.2)
       domain_name (~> 0.5)
     i18n (0.7.0)
-    json (1.8.3)
+    json (1.8.6)
     mime-types (2.99)
     mini_portile2 (2.0.0)
     minitest (5.8.3)
@@ -160,4 +160,4 @@ DEPENDENCIES
   whenever
 
 BUNDLED WITH
-   1.13.6
+   1.15.4
