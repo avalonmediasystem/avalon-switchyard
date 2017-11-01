@@ -24,7 +24,8 @@ class ApiToken < ActiveRecord::Base
   # @return [ApiToken] The token created, items can be accessed as symbols. :notes, :active, etc
   def create_token(notes: 'none', active: true)
     # Prevent SQL Injection
-    notes = ActiveRecord::Base.sanitize(notes)
+    # TODO: fix this sanitization:
+    #notes = ActiveRecord::Base.sanitize(notes)
     fail ArgumentError, "active is a #{active.class} not a Boolean" if active != !!active
 
     token = generate_token

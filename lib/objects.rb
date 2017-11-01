@@ -184,8 +184,9 @@ class Objects
   # @return results [Boolean] :success true if successfull, false if not
   # @return results [String] :group_name the group_name of the object created, only return if deletion was successfull
   def destroy_object(group_name)
+    objs = MediaObject.where(group_name: group_name)
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.destroy_all(group_name: group_name)
+      objs.destroy_all
       return { success: true, group_name: group_name }
     end
   rescue
