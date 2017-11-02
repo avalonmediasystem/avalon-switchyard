@@ -1,4 +1,4 @@
-class ErrorsTable < ActiveRecord::Migration
+class ErrorsTable < ActiveRecord::Migration[4.2]
   def change
     create_table :errors do |t|
       t.string :mco_id
