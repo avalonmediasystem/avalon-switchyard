@@ -239,7 +239,7 @@ class Objects
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode']).merge({other_identifier: part['mdpi_barcode']})
+        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'])
       end
     end
     return_array
@@ -430,11 +430,17 @@ class Objects
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
     end
 
-
     oclc_number = parse_oclc_field(object[:json][:metadata]['oclc_number'])
     unless oclc_number.nil?
       fields[:other_identifier] << oclc_number
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
+    end
+
+    # Compile mdpi_barcodes from :parts and add as other_identifiers
+    barcodes = object[:json][:parts].collect { |part| part['mdpi_barcode'] }.compact.uniq
+    if barcodes.present?
+      fields[:other_identifier] += barcodes
+      fields[:other_identifier_type] += Array.new(barcodes.size, 'mdpi barcode')
     end
 
     fields
