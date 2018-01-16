@@ -275,27 +275,23 @@ describe 'creation of media objects' do
           end
 
         end
-	it 'can parse info for one file in an object' do
-	  expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode']).class).to eq(Hash)
-	end
+        it 'can parse info for one file in an object' do
+          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode']).class).to eq(Hash)
+        end
 
-	# Turn this back on once file parsing has been finalized
-	xit 'writes an error when the file cannot be parsed' do
-	  expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
-	  @media_object.get_file_info(@object, @file_info)
-	end
+      	# Turn this back on once file parsing has been finalized
+      	xit 'writes an error when the file cannot be parsed' do
+      	  expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
+      	  @media_object.get_file_info(@object, @file_info)
+      	end
 
-	describe do
+      	describe do
           let(:parse) { @media_object.get_all_file_info(@object) }
-	  it 'can parse all files in an object' do
-	    expect(parse.class).to eq(Array)
-	    expect(parse[0].class).to eq(Hash)
-	  end
-
-          it 'includes mdpi barcodes' do
-            expect(parse[0][:other_identifier]).not_to be_empty
-          end
-	end
+      	  it 'can parse all files in an object' do
+      	    expect(parse.class).to eq(Array)
+      	    expect(parse[0].class).to eq(Hash)
+      	  end
+      	end
       end
 
       describe 'getting the file format' do
@@ -388,6 +384,14 @@ describe 'creation of media objects' do
           fields = @media_object.get_fields_from_mods(@object)
           expect(fields.keys.include? :bibliographic_id).to be_truthy
           expect(fields[:bibliographic_id]).not_to be_nil
+        end
+        it 'should have mdpi_barcode(s) if provided' do
+          #Use a fixture that has a barcode
+          @object = Objects.new(posted_content: load_sample_obj(filename: 'GR00034889.txt')).parse_request_body
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields.keys.include? :other_identifier).to be_truthy
+          expect(fields[:other_identifier]).to include('40000000089906')
+          expect(fields[:other_identifier_type]).to include('mdpi barcode')
         end
         it 'should have a call number if provided' do
           #Use a fixture that has a call number
