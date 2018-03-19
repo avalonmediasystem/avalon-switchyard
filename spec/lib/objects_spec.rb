@@ -190,18 +190,18 @@ describe 'creation of media objects' do
 
         describe 'parsing file info' do
           it 'can parse info for one file in an object' do
-            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode']).class).to eq(Hash)
+            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
           end
 
           # Turn this back on once file parsing has been finalized
           xit 'writes an error when the file cannot be parsed' do
             expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
-            @media_object.get_file_info(@object, @file_info)
+            @media_object.get_file_info(@object, @file_info, {})
           end
 
           describe do
             it 'can parse all files in an object' do
-              parse = @media_object.get_all_file_info(@object)
+              parse = @media_object.get_all_file_info(@object, {})
               expect(parse.class).to eq(Array)
               expect(parse[0].class).to eq(Hash)
             end
@@ -212,7 +212,8 @@ describe 'creation of media objects' do
               obj= Objects.new(posted_content: load_sample_obj(filename: 'GR00104460.txt'))
               @sobject = obj.parse_request_body
               @file_info = @sobject[:json][:parts][0]['files']['1']
-              @parsed_info = obj.get_file_info(@sobject, @file_info,@sobject[:json][:parts][0]['mdpi_barcode'])
+              @comments = obj.parse_comments(@sobject)
+              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], @comments)
 
               @fixture_info = {
                 workflow_name: "avalon",
@@ -225,6 +226,8 @@ describe 'creation of media objects' do
                 label: 'Betacam 1/1 Side 1 (40000000693483)',
                 thumbnail_offset: 120457,
                 poster_offset: 120457,
+                comment: ["Upon inspection under the microscope, it appears that the groove may have been cut slightly off of vertical.",
+                          "Ingest: Signal - Intermittent audio on linear and/or hifi tracks;"],
                 files: [{:label=>"quality-low",
                           :id=>"MDPI_40000000693483_01_low.mp4",
                           :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_low_20160108_093019.mp4",
@@ -276,17 +279,17 @@ describe 'creation of media objects' do
 
         end
         it 'can parse info for one file in an object' do
-          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode']).class).to eq(Hash)
+          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
         end
 
       	# Turn this back on once file parsing has been finalized
       	xit 'writes an error when the file cannot be parsed' do
       	  expect(@media_object).to receive(:object_error_and_exit).at_least(:once)
-      	  @media_object.get_file_info(@object, @file_info)
+      	  @media_object.get_file_info(@object, @file_info, {})
       	end
 
       	describe do
-          let(:parse) { @media_object.get_all_file_info(@object) }
+          let(:parse) { @media_object.get_all_file_info(@object, {}) }
       	  it 'can parse all files in an object' do
       	    expect(parse.class).to eq(Array)
       	    expect(parse[0].class).to eq(Hash)

@@ -213,6 +213,7 @@ class Objects
   # @param [Hash] object The JSON posted to the router with its keys symbolized
   # @return [String] the object in the json format needed to submit it to Avalon
   def transform_object(object)
+    comments = parse_comments(object)
     fields = {}
     begin
       fields = get_fields_from_mods(object)
@@ -220,7 +221,7 @@ class Objects
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
 
-    files = get_all_file_info(object)
+    files = get_all_file_info(object, comments)
     collection_id = get_object_collection_id(object, attempt_to_route(object))
     final = { fields: fields, files: files, collection_id: collection_id }
 #FIXME!!!!
@@ -233,13 +234,13 @@ class Objects
   #
   # @param [Hash] object the object as posted
   # @return [Array <Hash>] All the files hashed for Avalon
-  def get_all_file_info(object)
+  def get_all_file_info(object, comments)
     return_array = []
     # Loop over every part
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'])
+        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'], comments)
       end
     end
     return_array
@@ -251,7 +252,7 @@ class Objects
   # @param [String] file the representation of the file's information in a string that can be parsed as XML
   # @param [String] the mdpi_barcode for the file
   # @return [Hash] a hash of the file ready for addition to :files
-  def get_file_info(object, file, mdpi_barcode)
+  def get_file_info(object, file, mdpi_barcode, comments)
     # TODO: Split me up further once file parsing is finalized
     file_hash = {}
 
@@ -312,6 +313,15 @@ class Objects
 
       # Set masterfile-level info (highest level is set last)
       file_hash[:file_location] = derivative_hash[:url]
+
+      # Add comments for barcode as a whole
+      general_barcode_comments = comments["Object #{mdpi_barcode}"]
+      file_hash[:comment] = general_barcode_comments.present? ? general_barcode_comments : []
+      # Add comments for this masterfile (get the key from filename: MDPI_45000000259777_01_high.mp4 => MDPI_45000000259777_01)
+      part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
+      masterfile_comments = comments[part_id]
+      file_hash[:comment] += masterfile_comments if masterfile_comments.present?
+
       begin
         file_hash[:file_size] = format['size']
         file_hash[:duration] = (format['duration'].to_f * 1000).to_i.to_s
@@ -399,6 +409,7 @@ class Objects
     fields[:title] = mods.xpath('/mods/titleInfo/title').text
     fields[:title] = determine_call_number(object) || 'Untitled' if fields[:title] == ''
     fields[:creator] = get_creator(mods)
+
     # TODO: Stick me in a block
     begin
       fields[:date_issued] = mods.xpath("/mods/originInfo/dateIssued[@encoding='marc']")[0].text
@@ -465,6 +476,26 @@ class Objects
       return parsed_mods.remove_namespaces!
     rescue
       object_error_and_exit(object, 'failed to parse mods as XML')
+    end
+  end
+
+  # Parse the comments in the object to build a useable data structure for buidling file info
+  #
+  # @param [Hash] object The media object in its posted json hash
+  # @return [Hash] a hash the maps object/part identifiers to array of comment strings
+  def parse_comments(object)
+    begin
+      # comments submitted in object json take the form of an array of pairs:
+      # [[object/part_id, comment], [object/part_id, comment], ...]
+      comment_array = object[:json][:comments] || []
+      comments = {}
+      comment_array.each do |id, comment|
+        comments[id] = [] if comments[id].nil?
+        comments[id] += [comment]
+      end
+      return comments
+    rescue
+      object_error_and_exit(object, 'failed to create comments hash from posted json')
     end
   end
 
