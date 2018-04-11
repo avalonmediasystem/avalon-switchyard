@@ -34,62 +34,90 @@ class Objects
   #
   # @param [Hash] object the object as deposited in Switchyard
   def post_new_media_object(object)
-    routing_target = attempt_to_route(object)
-    payload = ''
-    payload = transform_object(object)
-    Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
-    post_path = routing_target[:url] + '/media_objects.json'
-    resp = ''
-    post_failiure = Proc.new do |exception, attempt_number, total_delay|
-      message = "Error posting new object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
-      Sinatra::Application.settings.switchyard_log.error message
-      if attempt_number == Sinatra::Application.settings.max_retries
-        Objects.new.object_error_and_exit(object, message)
-      end
-    end
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
-      Sinatra::Application.settings.switchyard_log.info "Attempting to post #{post_path} #{payload}"
-      resp = RestClient::Request.execute(method: :post, url: post_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
-      #resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
-      Sinatra::Application.settings.switchyard_log.info resp
-    end
-    object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
-    pid = JSON.parse(resp.body).symbolize_keys[:id]
-    update_info = { status: 'deposited',
-                    error: false,
-                    last_modified: Time.now.utc.iso8601.to_s,
-                    avalon_chosen: routing_target[:url],
-                    avalon_pid: pid,
-                    avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
-                    message: 'successfully deposited in avalon' }
-    update_status(object[:json][:group_name], update_info)
+    send_media_object(object, true)
   end
 
   # Updates a media object currently in Avalon, creates the collection first if needed
   # Writes the status of the submission to the database
   #
   # @param [Hash] object the object as deposited in Switchyard
-  # TODO: refactor this and post_new_media_object to follow DRY
   def update_media_object(object)
+    new_avalon_item = false
+    media_object = MediaObject.find_by(group_name: object[:json][:group_name])
+    avalon_pid = media_object[:avalon_pid]
     routing_target = attempt_to_route(object)
-    payload = transform_object(object)
-    payload = JSON.parse(payload)
-    payload[:replace_masterfiles] = true # overwrite the current structure
-    payload = payload.to_json
-    put_path = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
+    avalon_object_url = "#{routing_target[:url]}/media_objects/#{avalon_pid}.json"
     resp = ''
-    put_failiure = Proc.new do |exception, attempt_number, total_delay|
-      message = "Error updating object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
+    # Check for existing item on avalon and see if it has been migrated
+    fail_handler = Proc.new do |exception, attempt_number, total_delay|
+      message = "Error checking for media_object on target (#{routing_target}), recieved #{exception} #{exception.message} on attempt #{attempt_number}"
       Sinatra::Application.settings.switchyard_log.error message
       if attempt_number == Sinatra::Application.settings.max_retries
         Objects.new.object_error_and_exit(object, message)
       end
     end
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
-      resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
-      #resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: fail_handler, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
+      resp = RestClient::Request.execute(method: :get, url: avalon_object_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      Sinatra::Application.settings.switchyard_log.info "Checking media_object on target (#{routing_target}) response: #{resp}"
     end
-    object_error_and_exit(object, "Failed to update media object in Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
+    if resp.code == 500
+      # Avalon 5 pid not found, send an insert instead of update
+      new_avalon_item = true
+      Sinatra::Application.settings.switchyard_log.info "Media_object (#{avalon_pid}) not found on target (#{routing_target})."
+    elsif resp.code == 200
+      resp_json = JSON.parse(resp.body).symbolize_keys
+      if resp_json[:errors].present? and resp_json[:errors].find { |e| /not found/ =~ e }.present?
+        # Avalon 6 pid not found, send an insert instead of update
+        new_avalon_item = true
+        Sinatra::Application.settings.switchyard_log.info "Media_object (#{avalon_pid}) not found on target (#{routing_target})."
+      else
+        target_pid = resp_json[:id]
+        if target_pid != avalon_pid
+          # If migrated, update switchyard object status before sending update
+          update_info = { avalon_chosen: routing_target[:url],
+                          avalon_pid: target_pid,
+                          avalon_url: "#{routing_target[:url]}/media_objects/#{target_pid}"}
+          update_status(object[:json][:group_name], update_info)
+        end
+      end
+    end
+
+    send_media_object(object, new_avalon_item)
+  end
+
+  # Puts/Posts media object to an Avalon, creates the collection first if needed
+  # Writes the status of the submission to the database
+  #
+  # @param [Hash] object the object as deposited in Switchyard
+  # @param [Boolean] true to insert a new media_object, false to update existing
+  def send_media_object(object, new_object)
+    routing_target = attempt_to_route(object)
+    payload = transform_object(object)
+    payload = JSON.parse(payload)
+    payload[:replace_masterfiles] = true # overwrite the current structure
+    payload = payload.to_json
+    Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
+    if new_object
+      request_method = :post
+      avalon_object_url = routing_target[:url] + '/media_objects.json'
+    else
+      request_method = :put
+      avalon_object_url = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
+    end
+    resp = ''
+    fail_handler = Proc.new do |exception, attempt_number, total_delay|
+      message = "Error sending object using #{request_method} to #{routing_target} with #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
+      Sinatra::Application.settings.switchyard_log.error message
+      if attempt_number == Sinatra::Application.settings.max_retries
+        Objects.new.object_error_and_exit(object, message)
+      end
+    end
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: fail_handler, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
+      Sinatra::Application.settings.switchyard_log.info "Attempting to #{request_method} #{avalon_object_url} #{payload}"
+      resp = RestClient::Request.execute(method: request_method, url: avalon_object_url, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      Sinatra::Application.settings.switchyard_log.info resp
+    end
+    object_error_and_exit(object, "Failed to #{request_method} to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
                     error: false,
@@ -255,7 +283,6 @@ class Objects
   def get_file_info(object, file, mdpi_barcode, comments)
     # TODO: Split me up further once file parsing is finalized
     file_hash = {}
-
     # Setup the defaults
     file_hash[:workflow_name] = 'avalon'
     file_hash[:percent_complete] = '100.0'
