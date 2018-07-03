@@ -57,7 +57,11 @@ class Objects
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: fail_handler, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
-      resp = RestClient::Request.execute(method: :get, url: avalon_object_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      begin
+        resp = RestClient::Request.execute(method: :get, url: avalon_object_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      rescue RestClient::ExceptionWithResponse => error
+        resp = error.response
+      end
       Sinatra::Application.settings.switchyard_log.info "Checking media_object on target (#{routing_target}) response: #{resp}"
     end
     if resp.code == 500
