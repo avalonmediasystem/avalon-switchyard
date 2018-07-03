@@ -29,6 +29,26 @@ class Collection < ActiveRecord::Base
     query_result = nil
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
       query_result = Collection.find_by(name: name, avalon_url: url)
+      # Request url/admin/collection/query_result[:pid].json
+      # query_result[:pid] = response[:id] if response
+      # Update the entry in the database?
+      begin
+        avalon_collection_url = "#{url}/admin/collections/#{query_result[:pid]}.json"
+        Sinatra::Application.settings.switchyard_log.info "Checking for new collection id at #{avalon_collection_url}"
+        routing_target = Router.new.select_avalon({})
+        resp = RestClient::Request.execute(method: :get, url: avalon_collection_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: 45 * 60)
+        resp_json = JSON.parse(resp.body).symbolize_keys
+        if resp_json[:errors].present?
+          Sinatra::Application.settings.switchyard_log.error "Error checking for collection (#{avalon_collection_url}), received #{resp.code} #{resp_json[:errors]}"
+          query_result = nil
+        else
+          Sinatra::Application.settings.switchyard_log.info "Using new collection id #{resp_json[:id]}" if query_result[:pid] != resp_json[:id]
+          query_result[:pid] = resp_json[:id]
+        end
+      rescue RestClient::ExceptionWithResponse => error
+        Sinatra::Application.settings.switchyard_log.error "Error checking for collection (#{avalon_collection_url}), received #{error.code}"
+        query_result = nil
+      end
     end
     result = { exists: !query_result.nil? }
     result[:pid] = query_result[:pid] if result[:exists]
