@@ -46,6 +46,19 @@ describe 'collection management' do
     sleep(1)
   end
 
+  it 'retrieves the new pid of a migrated collection and updates the collection in the database' do
+    collection_name = Time.now.utc.to_s
+    pid = Time.now.utc.to_s
+    new_pid = 'newpid'
+    test_collection = { name: collection_name, url: "https://bar#{@url}.edu", pid: pid, fullname: 'A human readable unit name'}
+    stub_request(:get, "https://bar.edu/admin/collections/#{collection_name}.json").to_return(status: 200, body: "{\"id\":\"#{new_pid}\"}")
+    expect(@collection.collection_information(test_collection[:name], test_collection[:url])[:exists]).to be_falsey
+    @collection.save_collection_in_database(test_collection[:name], test_collection[:pid], test_collection[:url], test_collection[:fullname])
+    expect(@collection.collection_information(test_collection[:name], test_collection[:url])[:pid]).to eq(new_pid)
+    expect(Collection.find_by(name: collection_name).pid).to eq(new_pid)
+    sleep(1)
+  end
+
   it 'requires both name and url to match' do
     stub_request(:get, "http://vader/admin/collections/sith.json").to_return(status: 200, body: "{\"id\":\"sith\"}")
     expect(@collection.collection_information('darth', 'vader')[:exists]).to be_falsey
