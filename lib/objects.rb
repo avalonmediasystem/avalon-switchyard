@@ -43,6 +43,7 @@ class Objects
   # @param [Hash] object the object as deposited in Switchyard
   def update_media_object(object)
     new_avalon_item = false
+    old_pid = nil
     media_object = MediaObject.find_by(group_name: object[:json][:group_name])
     avalon_pid = media_object[:avalon_pid]
     routing_target = attempt_to_route(object)
@@ -57,15 +58,21 @@ class Objects
       end
     end
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: fail_handler, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
-      resp = RestClient::Request.execute(method: :get, url: avalon_object_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      begin
+        resp = RestClient::Request.execute(method: :get, url: avalon_object_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      rescue RestClient::ExceptionWithResponse => error
+        resp = error.response
+      end
       Sinatra::Application.settings.switchyard_log.info "Checking media_object on target (#{routing_target}) response: #{resp}"
     end
     if resp.code == 500
       # Avalon 5 pid not found, send an insert instead of update
       new_avalon_item = true
+      old_pid = avalon_pid
       Sinatra::Application.settings.switchyard_log.info "Media_object (#{avalon_pid}) not found on target (#{routing_target})."
     elsif resp.code == 200
       resp_json = JSON.parse(resp.body).symbolize_keys
+      old_pid = avalon_pid
       if resp_json[:errors].present? and resp_json[:errors].find { |e| /not found/ =~ e }.present?
         # Avalon 6 pid not found, send an insert instead of update
         new_avalon_item = true
@@ -82,7 +89,7 @@ class Objects
       end
     end
 
-    send_media_object(object, new_avalon_item)
+    send_media_object(object, new_avalon_item, old_pid)
   end
 
   # Puts/Posts media object to an Avalon, creates the collection first if needed
@@ -90,11 +97,12 @@ class Objects
   #
   # @param [Hash] object the object as deposited in Switchyard
   # @param [Boolean] true to insert a new media_object, false to update existing
-  def send_media_object(object, new_object)
+  def send_media_object(object, new_object, old_pid=nil)
     routing_target = attempt_to_route(object)
     payload = transform_object(object)
     payload = JSON.parse(payload)
     payload[:replace_masterfiles] = true # overwrite the current structure
+    payload['fields'][:identifier] = old_pid if old_pid.present?
     payload = payload.to_json
     Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
     if new_object
