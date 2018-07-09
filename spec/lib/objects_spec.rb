@@ -497,7 +497,7 @@ describe 'creation of media objects' do
     end
 
     it 'properly forms a put request for a previously inserted object' do
-      allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
+      allow(MediaObject).to receive(:find_by).and_return(MediaObject.new(avalon_pid: @avalon_pid))
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
       stub_request(:put, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(body: { id: @avalon_pid }.to_json, status: 200)
       stub_request(:get, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(body: { id: @avalon_pid }.to_json, status: 200)
@@ -511,7 +511,7 @@ describe 'creation of media objects' do
     end
 
     it 'properly forms a post request for a previously inserted but missing 6.x object' do
-      allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
+      allow(MediaObject).to receive(:find_by).and_return(MediaObject.new(avalon_pid: @avalon_pid))
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
       stub_request(:post, "https://youravalon.edu/media_objects.json").to_return(body: {id: @avalon_pid}.to_json, status: 200)
       stub_request(:get, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(body: { errors: ["#{@avalon_pid} not found"] }.to_json, status: 200)
@@ -524,8 +524,8 @@ describe 'creation of media objects' do
       expect(results['avalon_chosen']).to eq(Router.new.select_avalon(@object)[:url])
     end
 
-    it 'properly forms a post request for a 5.x object that failed to migrate' do
-      allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
+    it 'properly forms a post request for a 5.x object that failed to migrate and saves 5.x identifier' do
+      allow(MediaObject).to receive(:find_by).and_return(MediaObject.new(avalon_pid: @avalon_pid))
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
       migrated_pid = 'migrated_pid'
       stub_request(:get, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(status: 500)
@@ -537,10 +537,11 @@ describe 'creation of media objects' do
       expect(results['error']).to be_falsey
       expect(results['avalon_pid']).to eq(migrated_pid)
       expect(results['avalon_chosen']).to eq(Router.new.select_avalon(@object)[:url])
+      expect(JSON.parse(MediaObject.find_by(group_name: @object[:json][:group_name])[:api_hash])["fields"]["identifier"]).to eq(@avalon_pid)
     end
 
     it 'properly forms a put request for a previously inserted but now migrated object' do
-      allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
+      allow(MediaObject).to receive(:find_by).and_return(MediaObject.new(avalon_pid: @avalon_pid))
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
       migrated_pid = 'migrated_pid'
       stub_request(:put, "https://youravalon.edu/media_objects/#{migrated_pid}.json").to_return(body: { id: migrated_pid }.to_json, status: 200)

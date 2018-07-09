@@ -99,11 +99,7 @@ class Objects
   # @param [Boolean] true to insert a new media_object, false to update existing
   def send_media_object(object, new_object, old_pid=nil)
     routing_target = attempt_to_route(object)
-    payload = transform_object(object)
-    payload = JSON.parse(payload)
-    payload[:replace_masterfiles] = true # overwrite the current structure
-    payload['fields'][:identifier] = old_pid if old_pid.present?
-    payload = payload.to_json
+    payload = transform_object(object, old_pid)
     Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
     if new_object
       request_method = :post
@@ -133,7 +129,9 @@ class Objects
                     avalon_chosen: routing_target[:url],
                     avalon_pid: pid,
                     avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
-                    message: 'successfully deposited in avalon' }
+                    message: 'successfully deposited in avalon'
+                  }
+    update_info[:api_hash] = payload if old_pid.present?
     update_status(object[:json][:group_name], update_info)
   end
 
@@ -248,7 +246,7 @@ class Objects
   #
   # @param [Hash] object The JSON posted to the router with its keys symbolized
   # @return [String] the object in the json format needed to submit it to Avalon
-  def transform_object(object)
+  def transform_object(object, old_pid = nil)
     comments = parse_comments(object)
     fields = {}
     begin
@@ -256,13 +254,18 @@ class Objects
     rescue Exception => e
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
-
+    fields[:identifier] = old_pid if old_pid.present?
     files = get_all_file_info(object, comments)
     collection_id = get_object_collection_id(object, attempt_to_route(object))
-    final = { fields: fields, files: files, collection_id: collection_id }
+    final = {
+      fields: fields,
+      files: files,
+      collection_id: collection_id,
+      publish: true, # publish files on dark avalon by default
+      replace_masterfiles: true # overwrite the current structure
+     }
 #FIXME!!!!
     final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
-    final[:publish] = true # publish files on dark avalon by default
     return final.to_json
   end
 
