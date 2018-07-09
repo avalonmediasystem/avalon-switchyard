@@ -527,21 +527,22 @@ describe 'creation of media objects' do
     it 'properly forms a post request for a 5.x object that failed to migrate' do
       allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
-      stub_request(:post, "https://youravalon.edu/media_objects.json").to_return(body: {id: @avalon_pid}.to_json, status: 200)
+      migrated_pid = 'migrated_pid'
       stub_request(:get, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(status: 500)
+      stub_request(:post, "https://youravalon.edu/media_objects.json").to_return(body: {id: migrated_pid}.to_json, status: 200)
 
       @media_object.update_media_object(@object)
       results = @media_object.object_status_as_json(@object[:json][:group_name])
       expect(results['status']).to eq('deposited')
       expect(results['error']).to be_falsey
-      expect(results['avalon_pid']).to eq(@avalon_pid)
+      expect(results['avalon_pid']).to eq(migrated_pid)
       expect(results['avalon_chosen']).to eq(Router.new.select_avalon(@object)[:url])
     end
 
     it 'properly forms a put request for a previously inserted but now migrated object' do
-      migrated_pid = 'avalon:bar'
       allow(MediaObject).to receive(:find_by).and_return(avalon_pid: @avalon_pid)
       allow(@media_object).to receive(:get_object_collection_id).and_return('foo')
+      migrated_pid = 'migrated_pid'
       stub_request(:put, "https://youravalon.edu/media_objects/#{migrated_pid}.json").to_return(body: { id: migrated_pid }.to_json, status: 200)
       stub_request(:get, "https://youravalon.edu/media_objects/#{@avalon_pid}.json").to_return(body: { id: migrated_pid }.to_json, status: 200)
 
