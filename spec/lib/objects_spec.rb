@@ -537,7 +537,7 @@ describe 'creation of media objects' do
       expect(results['error']).to be_falsey
       expect(results['avalon_pid']).to eq(migrated_pid)
       expect(results['avalon_chosen']).to eq(Router.new.select_avalon(@object)[:url])
-      expect(JSON.parse(MediaObject.find_by(group_name: @object[:json][:group_name])[:api_hash])["fields"]["identifier"]).to eq(@avalon_pid)
+      expect(JSON.parse(MediaObject.find_by(group_name: @object[:json][:group_name])[:api_hash])["fields"]["identifier"]).to eq([@avalon_pid])
     end
 
     it 'properly forms a put request for a previously inserted but now migrated object' do
