@@ -25,7 +25,7 @@ Avalon Switchyard is a Sinatra Ruby application written to route content between
 
 To launch a debug console navigate to the root of Avalon Switchyard and run:
 
-    irb -r './switchyard.rb'
+    bundle exec irb -r './switchyard.rb'
 
 Alternatively you can add in byebug where desired throughout the application.  When debugging via either method you can reach application settings through `Sinatra::Application.settings`.  See the `configure` block of `switchyard.rb` for further documentation.
 
