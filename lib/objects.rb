@@ -254,7 +254,7 @@ class Objects
     rescue Exception => e
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
-    fields[:identifier] = old_pid if old_pid.present?
+    fields[:identifier] = [old_pid] if old_pid.present?
     files = get_all_file_info(object, comments)
     collection_id = get_object_collection_id(object, attempt_to_route(object))
     final = {
