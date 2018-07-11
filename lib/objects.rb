@@ -99,6 +99,7 @@ class Objects
   # @param [Boolean] true to insert a new media_object, false to update existing
   def send_media_object(object, new_object, old_pid=nil)
     routing_target = attempt_to_route(object)
+    old_pid = save_old_pid_in_hash!(object, old_pid)
     payload = transform_object(object, old_pid)
     Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
     if new_object
@@ -131,8 +132,24 @@ class Objects
                     avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
                     message: 'successfully deposited in avalon'
                   }
-    update_info[:api_hash] = payload if old_pid.present?
     update_status(object[:json][:group_name], update_info)
+  end
+
+  # If object was previously posted, save the original avalon pid to the identifier field
+  # @param [Hash] object the object submitted to Switchyard
+  # @param [String] the pid from when object was first posted to avalon
+  # @return [String] the pid to send with the post, or nil
+  def save_old_pid_in_hash!(object, old_pid)
+    if old_pid.present?
+      js = JSON.parse(@posted_content)
+      unless js['metadata']['identifier'].present?
+        js['metadata']['identifier'] = [old_pid]
+        @posted_content = js.to_json
+        update_status(object[:json][:group_name], { api_hash: @posted_content })
+        return old_pid
+      end
+    end
+    nil
   end
 
   # Takes the information posts to the API in the request body and parses it
@@ -245,6 +262,7 @@ class Objects
   # Transforms the posted object into the json form needed to submit it to an Avalon instance
   #
   # @param [Hash] object The JSON posted to the router with its keys symbolized
+  # @param [String] the old pid to send with post
   # @return [String] the object in the json format needed to submit it to Avalon
   def transform_object(object, old_pid = nil)
     comments = parse_comments(object)
