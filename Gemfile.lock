@@ -71,7 +71,7 @@ GEM
     rack-test (0.6.3)
       rack (>= 1.0)
     rainbow (2.1.0)
-    rake (10.4.2)
+    rake (12.3.3)
     rb-readline (0.5.3)
     rest-client (1.8.0)
       http-cookie (>= 1.0.2, < 2.0)
