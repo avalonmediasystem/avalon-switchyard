@@ -325,11 +325,6 @@ class Objects
     structure = Nokogiri::XML(file['structure'])
     file_hash[:label] = structure.xpath('//Item').first['label']
 
-    # Get time offsets from structure. Use second segment if available, otherwise use first, then add 2 seconds.
-    begintimes = structure.xpath('//Span').collect{|d|d['begin']}
-    offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
-    file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset+2000
-
     # Get the physical description
     file_hash[:physical_description] = get_format(mdpi_barcode)
     # Get info for derivatives. Use highest quality derivative available for item-level values.
@@ -395,6 +390,13 @@ class Objects
         object_error_and_exit(object, 'failed to parse ffprobe data for object')
       end
     end
+
+    # Get time offsets from structure. Use second segment if available, otherwise use first, then add 2 seconds.
+    begintimes = structure.xpath('//Span').collect{|d|d['begin']}
+    offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
+    offset = offset + 2000
+    offset = 2000 if offset > file_hash[:files].collect { |d| d[:duration].to_i }.min
+    file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset
 
     #Set masterfile-level info
     begin
