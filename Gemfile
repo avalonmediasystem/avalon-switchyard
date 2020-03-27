@@ -36,6 +36,7 @@ group :test do
   gem 'capybara'
   gem 'coveralls', require: false
   gem 'rspec'
+  gem 'rspec_junit_formatter'
   gem 'webmock'
 end
 
