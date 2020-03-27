@@ -1,7 +1,0 @@
-# Logfile created on 2016-01-19 10:40:15 -0500 by logger.rb/44203
-I, [2016-01-19T10:46:53.412047 #62365]  INFO -- : saving collection with 2016-01-19T15:46:53Z, foo, https://bar.edu, A human readable unit name
-I, [2016-01-19T10:46:53.416038 #62365]  INFO -- : Created collection 2016-01-19T15:46:53Z successfully with result of #<Collection:0x007ffb09a24f20>
-I, [2016-01-19T10:46:54.418070 #62365]  INFO -- : saving collection with 2016-01-19T15:46:54Z, 2016-01-19 15:46:54 UTC, https://bar.edu, A human readable unit name
-I, [2016-01-19T10:46:54.421246 #62365]  INFO -- : Created collection 2016-01-19T15:46:54Z successfully with result of #<Collection:0x007ffb0abcccc8>
-I, [2016-01-19T10:46:55.423002 #62365]  INFO -- : saving collection with darth, sith, vader, Anakin Skywalker
-I, [2016-01-19T10:46:55.426387 #62365]  INFO -- : Created collection darth successfully with result of #<Collection:0x007ffb0a1fcae0>
