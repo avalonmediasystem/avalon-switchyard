@@ -118,4 +118,34 @@ namespace :switchyard do
       end
     end
   end
+
+
+  desc "Send a single media object by group name"
+  task :send_by_group_name, [:group_name] => [:dotenv] do |t, args|
+    unless Router.new.send_in_progress?
+      # Lock it so future chron tasks don't run
+      media_object = MediaObject.find_by_group_name(args[:group_name])
+      media_object.locked = true
+      media_object.last_modified = Time.now.utc.iso8601.to_s
+      media_object.save!
+
+      # Send It
+      new_object = media_object.avalon_pid.nil?
+      begin
+        item = Objects.new(posted_content: media_object.api_hash)
+        object = item.parse_request_body
+        item.post_new_media_object(object) if new_object
+        item.update_media_object(object) unless new_object
+      rescue Exception => e
+        puts "Error encountered: #{e.message}"
+        puts e.backtrace
+        media_object.error = true
+        media_object.status = 'error'
+        media_object.message = e
+      end
+
+      media_object.locked = false
+      media_object.save!
+    end
+  end
 end
