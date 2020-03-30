@@ -33,7 +33,7 @@ end
 
 describe 'determining if switchyard is sending an object or not' do
   it 'returns false when no push is occuring' do
-    MediaObject.where(locked: true).destroy_all
+    MediaObject.destroy_by(locked: true)
     expect(Router.new.send_in_progress?).to be_falsey
   end
 
