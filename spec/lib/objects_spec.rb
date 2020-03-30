@@ -82,14 +82,14 @@ describe 'creation of media objects' do
     end
 
     it 'registers an object' do
-      MediaObject.where(group_name: @content[:json][:group_name]).destroy_all
+      MediaObject.destroy_by(group_name: @content[:json][:group_name])
       expect(MediaObject.find_by(group_name: @content[:json][:group_name])).to be_nil
       expect(@media_object.register_object(@content)).to be_truthy
       expect(MediaObject.find_by(group_name: @content[:json][:group_name])).not_to be_nil
     end
 
     it 'retries registering an object when there is an error' do
-      MediaObject.where(group_name: @content[:json][:group_name]).destroy_all
+      MediaObject.destroy_by(group_name: @content[:json][:group_name])
       allow(ActiveRecord::Base).to receive(:create).and_raise(ActiveRecord::ConnectionTimeoutError)
       expect(ActiveRecord::Base).to receive(:create).exactly(Sinatra::Application.settings.max_retries).times
       expect(@media_object.register_object(@content)[:success]).to be_falsey
@@ -107,8 +107,8 @@ describe 'creation of media objects' do
     end
 
     it 'retries destroying an object when there is an error' do
-      allow_any_instance_of(ActiveRecord::Relation).to receive(:destroy_all).and_raise(ActiveRecord::ConnectionTimeoutError)
-      expect_any_instance_of(ActiveRecord::Relation).to receive(:destroy_all).exactly(Sinatra::Application.settings.max_retries).times
+      allow(MediaObject).to receive(:destroy_by).and_raise(ActiveRecord::ConnectionTimeoutError)
+      expect(MediaObject).to receive(:destroy_by).exactly(Sinatra::Application.settings.max_retries).times
       expect(@media_object.destroy_object(@content[:json][:group_name])[:success]).to be_falsey
     end
 
@@ -134,7 +134,7 @@ describe 'creation of media objects' do
     end
 
     it 'returns 404 and a message when the object is not found' do
-      MediaObject.where(group_name: @object[:group_name]).destroy_all
+      MediaObject.destroy_by(group_name: @object[:group_name])
       expect(@media_object.object_status_as_json(@object[:group_name]).class).to eq(Hash)
       expect(@media_object.object_status_as_json(@object[:group_name])[:error]).to eq(404)
       expect(@media_object.object_status_as_json(@object[:group_name])[:success]).to be_falsey
@@ -569,7 +569,7 @@ describe 'creation of media objects' do
     end
 
     after :all do
-      MediaObject.where(group_name: 'TestingExistance').destroy_all
+      MediaObject.destroy_by(group_name: 'TestingExistance')
     end
 
     it 'returns false if the object has not been processed' do
@@ -590,7 +590,7 @@ describe 'creation of media objects' do
   describe 'working on objects in the queue' do
     it 'returns the oldest object in the queue that has status received' do
       created = DateTime.new(2001, 1, 1).iso8601
-      MediaObject.where(created: created).destroy_all
+      MediaObject.destroy_by(created: created)
       m = MediaObject.new
       m.created = created
       m.status = 'received'
@@ -600,7 +600,7 @@ describe 'creation of media objects' do
 
     it 'does not return the oldest object when the status is not received' do
       created = DateTime.new(1987, 1, 1).iso8601
-      MediaObject.where(created: created).destroy_all
+      MediaObject.destroy_by(created: created)
       m = MediaObject.new
       m.created = created
       m.status = 'error'

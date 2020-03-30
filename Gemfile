@@ -16,14 +16,14 @@
 source 'https://rubygems.org'
 
 # :default group gems
+gem 'dotenv'
+gem 'nokogiri'
+gem 'rake'
+gem 'rest-client'
 gem 'retries'
 gem 'sinatra'
 gem 'sinatra-activerecord'
-gem 'rake'
-gem 'coveralls', require: false
-gem 'nokogiri'
 gem 'whenever', require: false
-gem 'dotenv'
 
 group :development do
   gem 'byebug'
@@ -36,13 +36,15 @@ end
 
 group :test do
   gem 'capybara'
+  gem 'coveralls', require: false
   gem 'rspec'
+  gem 'rspec_junit_formatter'
   gem 'webmock'
 end
 
 group :development, :test do
-  gem 'sqlite3'
   gem 'rb-readline'
+  gem 'sqlite3'
 end
 
 group :production, optional: true do
