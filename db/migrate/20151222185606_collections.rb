@@ -1,4 +1,4 @@
-class Collections < ActiveRecord::Migration[4.2]
+class Collections < ActiveRecord::Migration
   def change
     create_table :collections do |t|
       t.string :name

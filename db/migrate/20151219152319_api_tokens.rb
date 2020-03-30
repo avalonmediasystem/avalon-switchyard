@@ -1,4 +1,4 @@
-class ApiTokens < ActiveRecord::Migration[4.2]
+class ApiTokens < ActiveRecord::Migration
   def change
     create_table :api_tokens do |t|
       t.string :token
