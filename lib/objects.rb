@@ -397,7 +397,7 @@ class Objects
     offset = offset + 2000
     calculated_duration = file_hash[:files].collect { |d| d[:duration].to_i }.min
     if offset > calculated_duration
-      offset = calculated_duration > 2000 ? 2000 : 0
+      offset = [calculated_duration - 100, 2000].min
     end
     file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset
 
