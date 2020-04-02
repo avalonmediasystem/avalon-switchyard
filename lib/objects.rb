@@ -395,7 +395,10 @@ class Objects
     begintimes = structure.xpath('//Span').collect{|d|d['begin']}
     offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
     offset = offset + 2000
-    offset = 2000 if offset > file_hash[:files].collect { |d| d[:duration].to_i }.min
+    calculated_duration = file_hash[:files].collect { |d| d[:duration].to_i }.min
+    if offset > calculated_duration
+      offset = calculated_duration > 2000 ? 2000 : 0
+    end
     file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset
 
     #Set masterfile-level info
