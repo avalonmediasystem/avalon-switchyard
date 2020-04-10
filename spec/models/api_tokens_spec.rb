@@ -47,7 +47,8 @@ describe 'api token generation and management' do
     it 'sanitizes the notes field' do
       note = 'FooBar'
       result = @api_token.create_token(notes: note)
-      expect(result[:notes]).to eq(ActiveRecord::Base.sanitize(note))
+      expect(result[:notes]).to eq(ActiveRecord::Base.sanitize_sql(note))
+      expect(result[:notes]).to eq(note)
     end
 
     it 'returns true if a token is unique' do

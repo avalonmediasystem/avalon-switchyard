@@ -16,34 +16,37 @@
 source 'https://rubygems.org'
 
 # :default group gems
+gem 'dotenv'
+gem 'nokogiri'
+gem 'rake'
+gem 'rest-client'
 gem 'retries'
 gem 'sinatra'
 gem 'sinatra-activerecord'
-gem 'rake'
-gem 'coveralls', require: false
-gem 'nokogiri'
 gem 'whenever', require: false
 
 group :development do
   gem 'byebug'
   gem 'capistrano', '>3.1.2'
   gem 'capistrano-bundler'
+  gem 'capistrano-passenger', require: false
   gem 'highline'
   gem 'rubocop'
 end
 
 group :test do
   gem 'capybara'
+  gem 'coveralls', require: false
   gem 'rspec'
+  gem 'rspec_junit_formatter'
   gem 'webmock'
 end
 
 group :development, :test do
-  gem 'sqlite3'
   gem 'rb-readline'
+  gem 'sqlite3'
 end
 
-group :production do
+group :production, optional: true do
   gem 'mysql2'
-  gem 'dotenv'
 end

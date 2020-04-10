@@ -25,8 +25,17 @@ class Router
   def select_avalon(object)
     # When it comes time to actually implement this, the Media Object function get_collection_name(object) will return the collection of an object
     # For now thought, default it is:
-    SwitchyardConfiguration.new.load_yaml('avalons.yml')['default'].symbolize_keys
+    avalons = SwitchyardConfiguration.new.load_yaml('avalons.yml')
+    target_avalon = object['target_avalon']
+    if target_avalon
+      fail ArgumentError, "Target avalon #{target_avalon} not configured" unless avalons[target_avalon].present?
+      target = avalons[target_avalon]
+    else
+      target = avalons['default']
+    end
+    target.symbolize_keys
   end
+
 
   # This function determines if an item is currently locked for transmission to Avalon or not
   #

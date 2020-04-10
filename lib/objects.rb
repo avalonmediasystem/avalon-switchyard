@@ -34,62 +34,95 @@ class Objects
   #
   # @param [Hash] object the object as deposited in Switchyard
   def post_new_media_object(object)
-    routing_target = attempt_to_route(object)
-    payload = ''
-    payload = transform_object(object)
-    Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
-    post_path = routing_target[:url] + '/media_objects.json'
-    resp = ''
-    post_failiure = Proc.new do |exception, attempt_number, total_delay|
-      message = "Error posting new object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
-      Sinatra::Application.settings.switchyard_log.error message
-      if attempt_number == Sinatra::Application.settings.max_retries
-        Objects.new.object_error_and_exit(object, message)
-      end
-    end
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: post_failiure, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
-      Sinatra::Application.settings.switchyard_log.info "Attempting to post #{post_path} #{payload}"
-      resp = RestClient::Request.execute(method: :post, url: post_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
-      #resp = RestClient.post post_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
-      Sinatra::Application.settings.switchyard_log.info resp
-    end
-    object_error_and_exit(object, "Failed to post to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
-    pid = JSON.parse(resp.body).symbolize_keys[:id]
-    update_info = { status: 'deposited',
-                    error: false,
-                    last_modified: Time.now.utc.iso8601.to_s,
-                    avalon_chosen: routing_target[:url],
-                    avalon_pid: pid,
-                    avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
-                    message: 'successfully deposited in avalon' }
-    update_status(object[:json][:group_name], update_info)
+    send_media_object(object, true)
   end
 
   # Updates a media object currently in Avalon, creates the collection first if needed
   # Writes the status of the submission to the database
   #
   # @param [Hash] object the object as deposited in Switchyard
-  # TODO: refactor this and post_new_media_object to follow DRY
   def update_media_object(object)
+    new_avalon_item = false
+    old_pid = nil
+    media_object = MediaObject.find_by(group_name: object[:json][:group_name])
+    avalon_pid = media_object[:avalon_pid]
     routing_target = attempt_to_route(object)
-    payload = transform_object(object)
-    payload = JSON.parse(payload)
-    payload[:replace_masterfiles] = true # overwrite the current structure
-    payload = payload.to_json
-    put_path = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
+    avalon_object_url = "#{routing_target[:url]}/media_objects/#{avalon_pid}.json"
     resp = ''
-    put_failiure = Proc.new do |exception, attempt_number, total_delay|
-      message = "Error updating object using #{routing_target} and posting #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
+    # Check for existing item on avalon and see if it has been migrated
+    fail_handler = Proc.new do |exception, attempt_number, total_delay|
+      message = "Error checking for media_object on target (#{routing_target}), recieved #{exception} #{exception.message} on attempt #{attempt_number}"
       Sinatra::Application.settings.switchyard_log.error message
       if attempt_number == Sinatra::Application.settings.max_retries
         Objects.new.object_error_and_exit(object, message)
       end
     end
-    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: put_failiure) do
-      resp = RestClient::Request.execute(method: :put, url: put_path, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
-      #resp = RestClient.put put_path, payload, {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: fail_handler, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
+      begin
+        resp = RestClient::Request.execute(method: :get, url: avalon_object_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      rescue RestClient::ExceptionWithResponse => error
+        resp = error.response
+      end
+      Sinatra::Application.settings.switchyard_log.info "Checking media_object on target (#{routing_target}) response: #{resp}"
     end
-    object_error_and_exit(object, "Failed to update media object in Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
+    if resp.code == 500
+      # Avalon 5 pid not found, send an insert instead of update
+      new_avalon_item = true
+      old_pid = avalon_pid
+      Sinatra::Application.settings.switchyard_log.info "Media_object (#{avalon_pid}) not found on target (#{routing_target})."
+    elsif resp.code == 200
+      resp_json = JSON.parse(resp.body).symbolize_keys
+      old_pid = avalon_pid
+      if resp_json[:errors].present? and resp_json[:errors].find { |e| /not found/ =~ e }.present?
+        # Avalon 6 pid not found, send an insert instead of update
+        new_avalon_item = true
+        Sinatra::Application.settings.switchyard_log.info "Media_object (#{avalon_pid}) not found on target (#{routing_target})."
+      else
+        target_pid = resp_json[:id]
+        if target_pid != avalon_pid
+          # If migrated, update switchyard object status before sending update
+          update_info = { avalon_chosen: routing_target[:url],
+                          avalon_pid: target_pid,
+                          avalon_url: "#{routing_target[:url]}/media_objects/#{target_pid}"}
+          update_status(object[:json][:group_name], update_info)
+        end
+      end
+    end
+
+    send_media_object(object, new_avalon_item, old_pid)
+  end
+
+  # Puts/Posts media object to an Avalon, creates the collection first if needed
+  # Writes the status of the submission to the database
+  #
+  # @param [Hash] object the object as deposited in Switchyard
+  # @param [Boolean] true to insert a new media_object, false to update existing
+  def send_media_object(object, new_object, old_pid=nil)
+    routing_target = attempt_to_route(object)
+    old_pid = save_old_pid_in_hash!(object, old_pid)
+    payload = transform_object(object, old_pid)
+    Sinatra::Application.settings.switchyard_log.info "Tranformed object #{object[:json][:group_name]} to #{payload}"
+    if new_object
+      request_method = :post
+      avalon_object_url = routing_target[:url] + '/media_objects.json'
+    else
+      request_method = :put
+      avalon_object_url = routing_target[:url] + "/media_objects/#{MediaObject.find_by(group_name: object[:json][:group_name])[:avalon_pid]}.json"
+    end
+    resp = ''
+    fail_handler = Proc.new do |exception, attempt_number, total_delay|
+      message = "Error sending object using #{request_method} to #{routing_target} with #{payload}, recieved #{exception} #{exception.message} on attempt #{attempt_number}"
+      Sinatra::Application.settings.switchyard_log.error message
+      if attempt_number == Sinatra::Application.settings.max_retries
+        Objects.new.object_error_and_exit(object, message)
+      end
+    end
+    with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds, handler: fail_handler, rescue: [RestClient::RequestTimeout, Errno::ETIMEDOUT, RestClient::GatewayTimeout]) do
+      Sinatra::Application.settings.switchyard_log.info "Attempting to #{request_method} #{avalon_object_url} #{payload}"
+      resp = RestClient::Request.execute(method: request_method, url: avalon_object_url, payload: payload, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: @timeout_in_minutes * 60)
+      Sinatra::Application.settings.switchyard_log.info resp
+    end
+    object_error_and_exit(object, "Failed to #{request_method} to Avalon, returned result of #{resp.code} and #{resp.body}") unless resp.code == 200
     pid = JSON.parse(resp.body).symbolize_keys[:id]
     update_info = { status: 'deposited',
                     error: false,
@@ -97,8 +130,26 @@ class Objects
                     avalon_chosen: routing_target[:url],
                     avalon_pid: pid,
                     avalon_url: "#{routing_target[:url]}/media_objects/#{pid}",
-                    message: 'successfully deposited in avalon' }
+                    message: 'successfully deposited in avalon'
+                  }
     update_status(object[:json][:group_name], update_info)
+  end
+
+  # If object was previously posted, save the original avalon pid to the identifier field
+  # @param [Hash] object the object submitted to Switchyard
+  # @param [String] the pid from when object was first posted to avalon
+  # @return [String] the pid to send with the post, or nil
+  def save_old_pid_in_hash!(object, old_pid)
+    if old_pid.present?
+      js = JSON.parse(@posted_content)
+      unless js['metadata']['identifier'].present?
+        js['metadata']['identifier'] = [old_pid]
+        @posted_content = js.to_json
+        update_status(object[:json][:group_name], { api_hash: @posted_content })
+        return old_pid
+      end
+    end
+    nil
   end
 
   # Takes the information posts to the API in the request body and parses it
@@ -185,7 +236,7 @@ class Objects
   # @return results [String] :group_name the group_name of the object created, only return if deletion was successfull
   def destroy_object(group_name)
     with_retries(max_tries: Sinatra::Application.settings.max_retries, base_sleep_seconds:  0.1, max_sleep_seconds: Sinatra::Application.settings.max_sleep_seconds) do
-      MediaObject.destroy_all(group_name: group_name)
+      MediaObject.destroy_by(group_name: group_name)
       return { success: true, group_name: group_name }
     end
   rescue
@@ -210,21 +261,28 @@ class Objects
   # Transforms the posted object into the json form needed to submit it to an Avalon instance
   #
   # @param [Hash] object The JSON posted to the router with its keys symbolized
+  # @param [String] the old pid to send with post
   # @return [String] the object in the json format needed to submit it to Avalon
-  def transform_object(object)
+  def transform_object(object, old_pid = nil)
+    comments = parse_comments(object)
     fields = {}
     begin
       fields = get_fields_from_mods(object)
     rescue Exception => e
       object_error_and_exit(object, 'an unknown error occurred while attempt to set the mods')
     end
-
-    files = get_all_file_info(object)
+    fields[:identifier] = [old_pid] if old_pid.present?
+    files = get_all_file_info(object, comments)
     collection_id = get_object_collection_id(object, attempt_to_route(object))
-    final = { fields: fields, files: files, collection_id: collection_id }
+    final = {
+      fields: fields,
+      files: files,
+      collection_id: collection_id,
+      publish: true, # publish files on dark avalon by default
+      replace_masterfiles: true # overwrite the current structure
+     }
 #FIXME!!!!
     final[:import_bib_record] = true unless fields[:bibliographic_id].nil?
-    final[:publish] = true # publish files on dark avalon by default
     return final.to_json
   end
 
@@ -232,13 +290,13 @@ class Objects
   #
   # @param [Hash] object the object as posted
   # @return [Array <Hash>] All the files hashed for Avalon
-  def get_all_file_info(object)
+  def get_all_file_info(object, comments)
     return_array = []
     # Loop over every part
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode']).merge({other_identifier: part['mdpi_barcode']})
+        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'], comments)
       end
     end
     return_array
@@ -250,10 +308,9 @@ class Objects
   # @param [String] file the representation of the file's information in a string that can be parsed as XML
   # @param [String] the mdpi_barcode for the file
   # @return [Hash] a hash of the file ready for addition to :files
-  def get_file_info(object, file, mdpi_barcode)
+  def get_file_info(object, file, mdpi_barcode, comments)
     # TODO: Split me up further once file parsing is finalized
     file_hash = {}
-
     # Setup the defaults
     file_hash[:workflow_name] = 'avalon'
     file_hash[:percent_complete] = '100.0'
@@ -267,11 +324,6 @@ class Objects
     # Get masterfile label from provided structure
     structure = Nokogiri::XML(file['structure'])
     file_hash[:label] = structure.xpath('//Item').first['label']
-
-    # Get time offsets from structure. Use second segment if available, otherwise use first, then add 2 seconds.
-    begintimes = structure.xpath('//Span').collect{|d|d['begin']}
-    offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
-    file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset+2000
 
     # Get the physical description
     file_hash[:physical_description] = get_format(mdpi_barcode)
@@ -311,6 +363,15 @@ class Objects
 
       # Set masterfile-level info (highest level is set last)
       file_hash[:file_location] = derivative_hash[:url]
+
+      # Add comments for barcode as a whole
+      general_barcode_comments = comments["Object #{mdpi_barcode}"]
+      file_hash[:comment] = general_barcode_comments.present? ? general_barcode_comments : []
+      # Add comments for this masterfile (get the key from filename: MDPI_45000000259777_01_high.mp4 => MDPI_45000000259777_01)
+      part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
+      masterfile_comments = comments[part_id]
+      file_hash[:comment] += masterfile_comments if masterfile_comments.present?
+
       begin
         file_hash[:file_size] = format['size']
         file_hash[:duration] = (format['duration'].to_f * 1000).to_i.to_s
@@ -329,6 +390,16 @@ class Objects
         object_error_and_exit(object, 'failed to parse ffprobe data for object')
       end
     end
+
+    # Get time offsets from structure. Use second segment if available, otherwise use first, then add 2 seconds.
+    begintimes = structure.xpath('//Span').collect{|d|d['begin']}
+    offset = structure_time_to_milliseconds(begintimes[[2,begintimes.count].min-1])
+    offset = offset + 2000
+    calculated_duration = file_hash[:files].collect { |d| d[:duration].to_i }.min
+    if offset > calculated_duration
+      offset = [calculated_duration - 100, 2000].min
+    end
+    file_hash[:poster_offset] = file_hash[:thumbnail_offset] = offset
 
     #Set masterfile-level info
     begin
@@ -398,6 +469,7 @@ class Objects
     fields[:title] = mods.xpath('/mods/titleInfo/title').text
     fields[:title] = determine_call_number(object) || 'Untitled' if fields[:title] == ''
     fields[:creator] = get_creator(mods)
+
     # TODO: Stick me in a block
     begin
       fields[:date_issued] = mods.xpath("/mods/originInfo/dateIssued[@encoding='marc']")[0].text
@@ -429,11 +501,17 @@ class Objects
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
     end
 
-
     oclc_number = parse_oclc_field(object[:json][:metadata]['oclc_number'])
     unless oclc_number.nil?
       fields[:other_identifier] << oclc_number
       fields[:other_identifier_type] << 'other' # Each other_identifier must have a corresponding entry, even if it is duplicate information
+    end
+
+    # Compile mdpi_barcodes from :parts and add as other_identifiers
+    barcodes = object[:json][:parts].collect { |part| part['mdpi_barcode'] }.compact.uniq
+    if barcodes.present?
+      fields[:other_identifier] += barcodes
+      fields[:other_identifier_type] += Array.new(barcodes.size, 'mdpi barcode')
     end
 
     fields
@@ -458,6 +536,26 @@ class Objects
       return parsed_mods.remove_namespaces!
     rescue
       object_error_and_exit(object, 'failed to parse mods as XML')
+    end
+  end
+
+  # Parse the comments in the object to build a useable data structure for buidling file info
+  #
+  # @param [Hash] object The media object in its posted json hash
+  # @return [Hash] a hash the maps object/part identifiers to array of comment strings
+  def parse_comments(object)
+    begin
+      # comments submitted in object json take the form of an array of pairs:
+      # [[object/part_id, comment], [object/part_id, comment], ...]
+      comment_array = object[:json][:comments] || []
+      comments = {}
+      comment_array.each do |id, comment|
+        comments[id] = [] if comments[id].nil?
+        comments[id] += [comment]
+      end
+      return comments
+    rescue
+      object_error_and_exit(object, 'failed to create comments hash from posted json')
     end
   end
 

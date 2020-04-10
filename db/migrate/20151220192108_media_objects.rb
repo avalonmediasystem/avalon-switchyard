@@ -1,4 +1,4 @@
-class MediaObjects < ActiveRecord::Migration
+class MediaObjects < ActiveRecord::Migration[4.2]
   def change
     create_table :media_objects do |t|
       t.string :group_name
