@@ -296,7 +296,7 @@ class Objects
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
-        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'], comments)
+        return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'], part['part'], comments)
       end
     end
     return_array
@@ -308,7 +308,7 @@ class Objects
   # @param [String] file the representation of the file's information in a string that can be parsed as XML
   # @param [String] the mdpi_barcode for the file
   # @return [Hash] a hash of the file ready for addition to :files
-  def get_file_info(object, file, mdpi_barcode, comments)
+  def get_file_info(object, file, mdpi_barcode, part_number, comments)
     # TODO: Split me up further once file parsing is finalized
     file_hash = {}
     # Setup the defaults
@@ -410,6 +410,7 @@ class Objects
     end
     file_hash[:file_checksum] = file["master_md5"]
     file_hash[:file_format] = get_file_format(object)
+    file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}"
     file_hash
   end
 
