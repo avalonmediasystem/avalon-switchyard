@@ -60,13 +60,6 @@ def load_sample_obj(filename: nil)
   File.read(p)
 end
 
-# Loads a fixture that is expected to fail somewhere out of the fail_objects dir
-def load_fail_object(filename)
-  p = './spec/fixtures/fail_objects/'
-  p << filename
-  File.read(p)
-end
-
 def post_media_create_request(api_token: '', body: '')
   RestClient.post('http://localhost:4567', body, api_token: api_token)
 end

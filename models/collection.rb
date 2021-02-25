@@ -79,8 +79,6 @@ class Collection < ActiveRecord::Base
   # @return [String] the pid of the collection
   def get_or_create_collection_pid(object, routing_target)
     name = object[:json][:metadata]['unit']
-    # TODO: Remove me once Kinsey goes live
-    Objects.new.object_error_and_exit(object, "Kinsey Item") if name.downcase == 'B-KINSEY'.downcase
     info = collection_information(name, routing_target[:url])
     unless info[:exists]
       # TODO: Make this smarter for how it selects managers and names the collection_object
