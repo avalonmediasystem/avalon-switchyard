@@ -124,6 +124,7 @@ describe 'collection management' do
       expect{@collection.get_or_create_collection_pid({json: {metadata: {'unit'=>'test'}}}, {})}.to raise_error(RuntimeError)
     end
   end
+
   describe 'default read groups' do
     it 'adds the prefix to the group name' do
       name = 'B-FOO'
