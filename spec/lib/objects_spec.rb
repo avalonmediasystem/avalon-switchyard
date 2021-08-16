@@ -190,7 +190,7 @@ describe 'creation of media objects' do
 
         describe 'parsing file info' do
           it 'can parse info for one file in an object' do
-            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
+            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],0,{}).class).to eq(Hash)
           end
 
           # Turn this back on once file parsing has been finalized
@@ -213,7 +213,7 @@ describe 'creation of media objects' do
               @sobject = obj.parse_request_body
               @file_info = @sobject[:json][:parts][0]['files']['1']
               @comments = obj.parse_comments(@sobject)
-              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], @comments)
+              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], 0, @comments)
 
               @fixture_info = {
                 workflow_name: "avalon",
@@ -224,6 +224,7 @@ describe 'creation of media objects' do
                 status_code: "COMPLETED",
                 structure: "<?xml version=\"1.0\" ?>\n<Item label=\"Betacam 1/1 Side 1 (40000000693483)\">\n  <Span label=\"Segment 1\" begin=\"00:00:00.000\" end=\"00:01:56.290\"/>\n  <Span label=\"Segment 2\" begin=\"00:01:58.457\" end=\"00:02:28.323\"/>\n</Item>",
                 label: 'Betacam 1/1 Side 1 (40000000693483)',
+                other_identifier: "40000000693483_00",
                 thumbnail_offset: 120457,
                 poster_offset: 120457,
                 comment: ["Upon inspection under the microscope, it appears that the groove may have been cut slightly off of vertical.",
@@ -279,7 +280,7 @@ describe 'creation of media objects' do
 
         end
         it 'can parse info for one file in an object' do
-          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
+          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],0,{}).class).to eq(Hash)
         end
 
       	# Turn this back on once file parsing has been finalized
