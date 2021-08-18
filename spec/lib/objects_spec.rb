@@ -190,7 +190,7 @@ describe 'creation of media objects' do
 
         describe 'parsing file info' do
           it 'can parse info for one file in an object' do
-            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
+            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],10,{}).class).to eq(Hash)
           end
 
           # Turn this back on once file parsing has been finalized
@@ -213,7 +213,7 @@ describe 'creation of media objects' do
               @sobject = obj.parse_request_body
               @file_info = @sobject[:json][:parts][0]['files']['1']
               @comments = obj.parse_comments(@sobject)
-              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], @comments)
+              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], 10, @comments)
 
               @fixture_info = {
                 workflow_name: "avalon",
@@ -271,7 +271,8 @@ describe 'creation of media objects' do
                 display_aspect_ratio: (4/3.0).round(10).to_s,
                 file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
                 original_frame_size: '720x512',
-                file_format: 'Moving image'
+                other_identifier: '40000000693483_10',
+                file_format: 'Moving image',
               }
               expect(@parsed_info).to eq(@fixture_info)
             end
@@ -279,7 +280,7 @@ describe 'creation of media objects' do
 
         end
         it 'can parse info for one file in an object' do
-          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
+          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],5,{}).class).to eq(Hash)
         end
 
       	# Turn this back on once file parsing has been finalized

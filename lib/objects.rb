@@ -368,7 +368,10 @@ class Objects
       general_barcode_comments = comments["Object #{mdpi_barcode}"]
       file_hash[:comment] = general_barcode_comments.present? ? general_barcode_comments : []
       # Add comments for this masterfile (get the key from filename: MDPI_45000000259777_01_high.mp4 => MDPI_45000000259777_01)
-      part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
+      part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1] 
+      # part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1] if /^MDPI_/.match(derivative_hash[:id])
+      # let's not check the filename format and just use it as our part_id
+      # part_id = derivative_hash[:id]
       masterfile_comments = comments[part_id]
       file_hash[:comment] += masterfile_comments if masterfile_comments.present?
 
