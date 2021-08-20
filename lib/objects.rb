@@ -296,7 +296,18 @@ class Objects
     object[:json][:parts].each do |part|
       # Loop over all the files in a part
       part['files'].keys.each do |key|
+puts "part['mdpi_barcode']"
+pp part['mdpi_barcode']
+puts "  comments "
+pp comments
         return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'], part['part'], comments)
+    k = 0
+    n = 5
+    while k < n do
+      puts "return_array #{k}"
+      pp return_array[k]
+      k += 1
+    end
       end
     end
     return_array
@@ -326,7 +337,8 @@ class Objects
     file_hash[:label] = structure.xpath('//Item').first['label']
 
     # Get the physical description
-    file_hash[:physical_description] = get_format(mdpi_barcode)
+    desc = get_format(mdpi_barcode)
+    file_hash[:physical_description] = desc if !desc.blank?
     # Get info for derivatives. Use highest quality derivative available for item-level values.
     file_hash[:files] = []
     quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
@@ -365,15 +377,21 @@ class Objects
       file_hash[:file_location] = derivative_hash[:url]
 
       # Add comments for barcode as a whole
-      general_barcode_comments = comments["Object #{mdpi_barcode}"]
+      general_barcode_comments = comments["Object #{mdpi_barcode}"] if mdpi_barcode
       file_hash[:comment] = general_barcode_comments.present? ? general_barcode_comments : []
+
+      #file_hash[:comment] =  general_barcode_comments if general_barcode_comments.present?
       # Add comments for this masterfile (get the key from filename: MDPI_45000000259777_01_high.mp4 => MDPI_45000000259777_01)
-      part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1] 
+      if /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id]) then
+        part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
+        masterfile_comments = comments[part_id]
+        file_hash[:comment] += masterfile_comments if masterfile_comments.present?
+      else 
+
+      end
       # part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1] if /^MDPI_/.match(derivative_hash[:id])
       # let's not check the filename format and just use it as our part_id
       # part_id = derivative_hash[:id]
-      masterfile_comments = comments[part_id]
-      file_hash[:comment] += masterfile_comments if masterfile_comments.present?
 
       begin
         file_hash[:file_size] = format['size']
@@ -413,7 +431,14 @@ class Objects
     end
     file_hash[:file_checksum] = file["master_md5"]
     file_hash[:file_format] = get_file_format(object)
-    file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}"
+    if !mdpi_barcode.blank? && !part_number.blank? then
+      file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}" 
+    #file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}" if !mdpi_barcode.blank? && !part_number.blank?
+    else
+      file_hash[:other_identifier] = "#{file_hash[:id]}_#{format('%02d', part_number)}"
+
+    end
+    puts "file_hash[:other_identifier]: #{file_hash[:other_identifier] }"
     file_hash
   end
 
