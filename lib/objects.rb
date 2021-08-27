@@ -44,7 +44,10 @@ class Objects
   def update_media_object(object)
     new_avalon_item = false
     old_pid = nil
-    return if object[:json].nil?
+    if object[:json].nil? then
+      message = "Nil object"
+        return Objects.new.object_error_and_exit(object, message)
+    end
     media_object = MediaObject.find_by(group_name: object[:json][:group_name])
 
 
@@ -577,8 +580,9 @@ class Objects
     begin
       # comments submitted in object json take the form of an array of pairs:
       # [[object/part_id, comment], [object/part_id, comment], ...]
-      comment_array = object[:json][:comments] || []
       comments = {}
+      return comments if object[:json].nil?
+      comment_array = object[:json][:comments] || []
       comment_array.each do |id, comment|
         comments[id] = [] if comments[id].nil?
         comments[id] += [comment]
