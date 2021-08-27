@@ -284,16 +284,6 @@ describe 'creation of media objects' do
               @comments = obj.parse_comments(@sobject) || []
               @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], 10, @comments)
 
-bc = @sobject[:json][:parts][0]['mdpi_barcode']
-
-puts "MDPI_BARCODE_FIXTURE BC"
-puts bc
-#puts "parts"
-#pp @sobject[:json][:parts][0]
-#puts "comments"
-#pp @comments
-#puts "parsed_info"
-#pp @parsed_info
 
 ### THIS IS THE FIXTURE FOR NONMDPI
 
@@ -543,8 +533,6 @@ puts bc
   describe 'recording errors' do
     it 'writes an error to the database' do
       content = Objects.new(posted_content: load_sample_obj).parse_request_body
-puts "content[:json] pp"
-pp content[:json]
       @media_object.destroy_object(content[:json][:group_name])
       @media_object.register_object(content)
       expect(@media_object.object_status_as_json(content[:json][:group_name])['error']).to be_falsey
