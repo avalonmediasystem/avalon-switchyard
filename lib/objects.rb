@@ -44,7 +44,17 @@ class Objects
   def update_media_object(object)
     new_avalon_item = false
     old_pid = nil
+puts "UPDATE OBJECT JSON group_name"
+begin
     media_object = MediaObject.find_by(group_name: object[:json][:group_name])
+rescue => e
+pp object
+  puts "ERROR ERROR "
+  pp e
+#  die 
+return
+end
+
     avalon_pid = media_object[:avalon_pid]
     routing_target = attempt_to_route(object)
     avalon_object_url = "#{routing_target[:url]}/media_objects/#{avalon_pid}.json"
@@ -305,7 +315,7 @@ pp comments
     n = 5
     while k < n do
       puts "return_array #{k}"
-      pp return_array[k]
+      #pp return_array[k]
       k += 1
     end
       end
@@ -376,8 +386,14 @@ pp comments
       # Set masterfile-level info (highest level is set last)
       file_hash[:file_location] = derivative_hash[:url]
 
+      puts "mdpi_barcode DERIVATIVES"
+      pp mdpi_barcode
       # Add comments for barcode as a whole
-      general_barcode_comments = comments["Object #{mdpi_barcode}"] if mdpi_barcode
+      general_barcode_comments = comments["Object #{mdpi_barcode}"] 
+      # if mdpi_barcode && comments["Object #{mdpi_barcode}"].present?
+      
+      puts "COMMENTS"
+      pp comments
       file_hash[:comment] = general_barcode_comments.present? ? general_barcode_comments : []
 
       #file_hash[:comment] =  general_barcode_comments if general_barcode_comments.present?
@@ -385,10 +401,17 @@ pp comments
       if /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id]) then
         part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
         masterfile_comments = comments[part_id]
-        file_hash[:comment] += masterfile_comments if masterfile_comments.present?
-      else 
+      else
+        part_id = derivative_hash[:id]
 
       end
+      puts "masterfile_comments"
+      pp masterfile_comments
+      puts "part_id: #{part_id}"
+        if !masterfile_comments.nil? then
+          file_hash[:comment] = [] if file_hash[:comment].blank?
+          file_hash[:comment] += masterfile_comments 
+        end
       # part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1] if /^MDPI_/.match(derivative_hash[:id])
       # let's not check the filename format and just use it as our part_id
       # part_id = derivative_hash[:id]
@@ -458,7 +481,8 @@ pp comments
   # @param [Hash] object the posted object in json
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
-
+puts "object ERROR ERROR"
+pp object
     update_status(object[:json][:group_name] || object[:json]['group_name'], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601, locked: false)
     fail "error with #{object[:json][:group_name]}, see database record"
   end

@@ -280,10 +280,16 @@ describe 'creation of media objects' do
               obj= Objects.new(posted_content: load_sample_obj(filename: 'NMGRP0001.txt'))
               @sobject = obj.parse_request_body
               @file_info = @sobject[:json][:parts][0]['files']['1']
-              @comments = []
+              #@comments = []
+              @comments = obj.parse_comments(@sobject) || []
               @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], 10, @comments)
-puts "parts"
-pp @sobject[:json][:parts][0]
+
+bc = @sobject[:json][:parts][0]['mdpi_barcode']
+
+puts "MDPI_BARCODE_FIXTURE BC"
+puts bc
+#puts "parts"
+#pp @sobject[:json][:parts][0]
 #puts "comments"
 #pp @comments
 #puts "parsed_info"
@@ -303,8 +309,8 @@ pp @sobject[:json][:parts][0]
                 poster_offset: 120457,
                 files: [{:label=>"quality-low",
                          :id=>"NONMDPI0000888_01_low.mp4",
-                          :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/NMGRP0001_NONMDPI0000888_01_low_20160108_093019.mp4",
-                          :hls_url=>"http://bl-uits-ct-mdpi.uits.indiana.edu/avalon_dark/media/B-RTVS/NMGRP0001_NONMDPI0000888_01_low_20160108_093019.mp4",
+                          :url=>"rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_low_20160108_093019.mp4",
+                          :hls_url=>"http://streaming.server/hls/mediapath/NMGRP0001_NONMDPI0000888_01_low_20160108_093019.mp4",
                           :duration=>"354788",
                           :mime_type=>"application/mp4",
                           :audio_bitrate=>"1152000",
@@ -315,8 +321,8 @@ pp @sobject[:json][:parts][0]
                           :height=>"512"},
                         {:label=>"quality-medium",
                           :id=>"NONMDPI0000888_01_med.mp4",
-                          :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/NMGRP0001_NONMDPI0000888_01_med_20160108_093019.mp4",
-                          :hls_url=>"http://bl-uits-ct-mdpi.uits.indiana.edu/avalon_dark/media/B-RTVS/NMGRP0001_NONMDPI0000888_01_med_20160108_093019.mp4",
+                          :url=>"rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_medium_20160108_093019.mp4",
+                          :hls_url=>"http://streaming.server/hls/mediapath/NMGRP0001_NONMDPI0000888_01_medium_20160108_093019.mp4",
                           :duration=>"354788",
                           :mime_type=>"application/mp4",
                           :audio_bitrate=>"1152000",
@@ -327,8 +333,8 @@ pp @sobject[:json][:parts][0]
                           :height=>"512"},
                         {:label=>"quality-high",
                           :id=>"NONMDPI0000888_01_high.mp4",
-                          :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4",
-                          :hls_url=>"http://bl-uits-ct-mdpi.uits.indiana.edu/avalon_dark/media/B-RTVS/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4",
+                          :url=>"rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4",
+                          :hls_url=>"http://streaming.server/hls/mediapath/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4",
                           :duration=>"354788",
                           :mime_type=>"application/mp4",
                           :audio_bitrate=>"1152000",
@@ -337,7 +343,7 @@ pp @sobject[:json][:parts][0]
                           :video_codec=>"mpeg2video",
                           :width=>"720",
                           :height=>"512"}],
-                file_location: 'rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4',
+                          file_location: 'rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4',
                 file_size: '2422702631',
                 duration: '354788',
                 comment: [],
@@ -345,7 +351,7 @@ pp @sobject[:json][:parts][0]
                 display_aspect_ratio: (4/3.0).round(10).to_s,
                 file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
                 original_frame_size: '720x512',
-                other_identifier: '_10',
+                other_identifier: '1223334444_10',
                 file_format: 'Moving image',
               }
 
