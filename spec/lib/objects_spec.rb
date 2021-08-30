@@ -190,7 +190,7 @@ describe 'creation of media objects' do
 
         describe 'parsing file info' do
           it 'can parse info for one file in an object' do
-            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
+            expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],10,{}).class).to eq(Hash)
           end
 
           # Turn this back on once file parsing has been finalized
@@ -213,21 +213,19 @@ describe 'creation of media objects' do
               @sobject = obj.parse_request_body
               @file_info = @sobject[:json][:parts][0]['files']['1']
               @comments = obj.parse_comments(@sobject)
-              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], @comments)
+              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], 10, @comments)
 
               @fixture_info = {
                 workflow_name: "avalon",
                 percent_complete: "100.0",
                 percent_succeeded: "100.0",
-                :physical_description => "these are not the droids you are looking for",
+                physical_description: "these are not the droids you are looking for",
                 percent_failed: "0",
                 status_code: "COMPLETED",
                 structure: "<?xml version=\"1.0\" ?>\n<Item label=\"Betacam 1/1 Side 1 (40000000693483)\">\n  <Span label=\"Segment 1\" begin=\"00:00:00.000\" end=\"00:01:56.290\"/>\n  <Span label=\"Segment 2\" begin=\"00:01:58.457\" end=\"00:02:28.323\"/>\n</Item>",
                 label: 'Betacam 1/1 Side 1 (40000000693483)',
                 thumbnail_offset: 120457,
                 poster_offset: 120457,
-                comment: ["Upon inspection under the microscope, it appears that the groove may have been cut slightly off of vertical.",
-                          "Ingest: Signal - Intermittent audio on linear and/or hifi tracks;"],
                 files: [{:label=>"quality-low",
                           :id=>"MDPI_40000000693483_01_low.mp4",
                           :url=>"rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_low_20160108_093019.mp4",
@@ -267,19 +265,96 @@ describe 'creation of media objects' do
                 file_location: 'rtmp://bl-uits-ct-mdpi.uits.indiana.edu:1935/avalon_dark/_definst_/mp4:B-RTVS/GR00104460_MDPI_40000000693483_01_high_20160108_093019.mp4',
                 file_size: '2422702631',
                 duration: '354788',
+                comment: ["Upon inspection under the microscope, it appears that the groove may have been cut slightly off of vertical.",
+                          "Ingest: Signal - Intermittent audio on linear and/or hifi tracks;"],
                 date_digitized: '2015-09-29',
                 display_aspect_ratio: (4/3.0).round(10).to_s,
                 file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
                 original_frame_size: '720x512',
-                file_format: 'Moving image'
+                other_identifier: '40000000693483_10',
+                file_format: 'Moving image',
               }
+              expect(@parsed_info).to eq(@fixture_info)
+            end
+            it 'returns correctly parsed file info for NON-MDPI' do
+              obj= Objects.new(posted_content: load_sample_obj(filename: 'NMGRP0001.txt'))
+              @sobject = obj.parse_request_body
+              @file_info = @sobject[:json][:parts][0]['files']['1']
+              #@comments = []
+              @comments = obj.parse_comments(@sobject) || []
+              @parsed_info = obj.get_file_info(@sobject, @file_info, @sobject[:json][:parts][0]['mdpi_barcode'], 10, @comments)
+
+
+### THIS IS THE FIXTURE FOR NONMDPI
+
+              @fixture_info = {
+                workflow_name: "avalon",
+                percent_complete: "100.0",
+                percent_succeeded: "100.0",
+                percent_failed: "0",
+                status_code: "COMPLETED",
+                structure: "<?xml version=\"1.0\" ?>\n<Item label=\"Betacam 1/1 Side 1 (Lorem ipsum)\">\n  <Span label=\"Segment 1\" begin=\"00:00:00.000\" end=\"00:01:56.290\"/>\n  <Span label=\"Segment 2\" begin=\"00:01:58.457\" end=\"00:02:28.323\"/>\n</Item>",
+                label: 'Betacam 1/1 Side 1 (Lorem ipsum)',
+                thumbnail_offset: 120457,
+                poster_offset: 120457,
+                files: [{:label=>"quality-low",
+                         :id=>"NONMDPI0000888_01_low.mp4",
+                          :url=>"rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_low_20160108_093019.mp4",
+                          :hls_url=>"http://streaming.server/hls/mediapath/NMGRP0001_NONMDPI0000888_01_low_20160108_093019.mp4",
+                          :duration=>"354788",
+                          :mime_type=>"application/mp4",
+                          :audio_bitrate=>"1152000",
+                          :audio_codec=>"pcm_s24le",
+                          :video_bitrate=>"50004785",
+                          :video_codec=>"mpeg2video",
+                          :width=>"720",
+                          :height=>"512"},
+                        {:label=>"quality-medium",
+                          :id=>"NONMDPI0000888_01_med.mp4",
+                          :url=>"rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_medium_20160108_093019.mp4",
+                          :hls_url=>"http://streaming.server/hls/mediapath/NMGRP0001_NONMDPI0000888_01_medium_20160108_093019.mp4",
+                          :duration=>"354788",
+                          :mime_type=>"application/mp4",
+                          :audio_bitrate=>"1152000",
+                          :audio_codec=>"pcm_s24le",
+                          :video_bitrate=>"50004785",
+                          :video_codec=>"mpeg2video",
+                          :width=>"720",
+                          :height=>"512"},
+                        {:label=>"quality-high",
+                          :id=>"NONMDPI0000888_01_high.mp4",
+                          :url=>"rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4",
+                          :hls_url=>"http://streaming.server/hls/mediapath/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4",
+                          :duration=>"354788",
+                          :mime_type=>"application/mp4",
+                          :audio_bitrate=>"1152000",
+                          :audio_codec=>"pcm_s24le",
+                          :video_bitrate=>"50004785",
+                          :video_codec=>"mpeg2video",
+                          :width=>"720",
+                          :height=>"512"}],
+                          file_location: 'rtmp://streaming.server/mediapath/NMGRP0001_NONMDPI0000888_01_high_20160108_093019.mp4',
+                file_size: '2422702631',
+                duration: '354788',
+                comment: [],
+                date_digitized: '2021-08-20',
+                display_aspect_ratio: (4/3.0).round(10).to_s,
+                file_checksum: 'bc5bd4f942e55affbe29b643c58fded0',
+                original_frame_size: '720x512',
+                other_identifier: '1223334444_10',
+                file_format: 'Moving image',
+              }
+
+### END OF FIXTURE FOR NONMDPI
+
+
               expect(@parsed_info).to eq(@fixture_info)
             end
           end
 
         end
         it 'can parse info for one file in an object' do
-          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],{}).class).to eq(Hash)
+          expect(@media_object.get_file_info(@object, @file_info,@object[:json][:parts][0]['mdpi_barcode'],5,{}).class).to eq(Hash)
         end
 
       	# Turn this back on once file parsing has been finalized

@@ -44,7 +44,13 @@ class Objects
   def update_media_object(object)
     new_avalon_item = false
     old_pid = nil
+    if object[:json].nil? then
+      message = "Nil object"
+        return Objects.new.object_error_and_exit(object, message)
+    end
     media_object = MediaObject.find_by(group_name: object[:json][:group_name])
+
+
     avalon_pid = media_object[:avalon_pid]
     routing_target = attempt_to_route(object)
     avalon_object_url = "#{routing_target[:url]}/media_objects/#{avalon_pid}.json"
@@ -297,6 +303,11 @@ class Objects
       # Loop over all the files in a part
       part['files'].keys.each do |key|
         return_array << get_file_info(object, part['files'][key], part['mdpi_barcode'], part['part'], comments)
+        k = 0
+        n = 5
+        while k < n do
+          k += 1
+        end
       end
     end
     return_array
@@ -326,7 +337,8 @@ class Objects
     file_hash[:label] = structure.xpath('//Item').first['label']
 
     # Get the physical description
-    file_hash[:physical_description] = get_format(mdpi_barcode)
+    desc = get_format(mdpi_barcode)
+    file_hash[:physical_description] = desc if !desc.blank?
     # Get info for derivatives. Use highest quality derivative available for item-level values.
     file_hash[:files] = []
     quality_map = {'low'=>'quality-low','med'=>'quality-medium','high'=>'quality-high'}
@@ -366,11 +378,26 @@ class Objects
 
       # Add comments for barcode as a whole
       general_barcode_comments = comments["Object #{mdpi_barcode}"]
+      # if mdpi_barcode && comments["Object #{mdpi_barcode}"].present?
+
       file_hash[:comment] = general_barcode_comments.present? ? general_barcode_comments : []
+
+      #file_hash[:comment] =  general_barcode_comments if general_barcode_comments.present?
       # Add comments for this masterfile (get the key from filename: MDPI_45000000259777_01_high.mp4 => MDPI_45000000259777_01)
-      part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
-      masterfile_comments = comments[part_id]
-      file_hash[:comment] += masterfile_comments if masterfile_comments.present?
+      if /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id]) then
+        part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1]
+        masterfile_comments = comments[part_id]
+      else
+        part_id = derivative_hash[:id]
+
+      end
+      if !masterfile_comments.nil? then
+        file_hash[:comment] = [] if file_hash[:comment].blank?
+        file_hash[:comment] += masterfile_comments
+      end
+      # part_id = /^(MDPI_\d+_\d+)_/.match(derivative_hash[:id])[1] if /^MDPI_/.match(derivative_hash[:id])
+      # let's not check the filename format and just use it as our part_id
+      # part_id = derivative_hash[:id]
 
       begin
         file_hash[:file_size] = format['size']
@@ -410,7 +437,13 @@ class Objects
     end
     file_hash[:file_checksum] = file["master_md5"]
     file_hash[:file_format] = get_file_format(object)
-    file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}"
+    if !mdpi_barcode.blank? && !part_number.blank? then
+      file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}" 
+    #file_hash[:other_identifier] = "#{mdpi_barcode}_#{format('%02d', part_number)}" if !mdpi_barcode.blank? && !part_number.blank?
+    else
+      file_hash[:other_identifier] = "#{file_hash[:id]}_#{format('%02d', part_number)}"
+
+    end
     file_hash
   end
 
@@ -430,7 +463,6 @@ class Objects
   # @param [Hash] object the posted object in json
   # @param [String] message the error message to write
   def object_error_and_exit(object, message)
-
     update_status(object[:json][:group_name] || object[:json]['group_name'], status: 'failed', error: true, message: message, last_modified: Time.now.utc.iso8601, locked: false)
     fail "error with #{object[:json][:group_name]}, see database record"
   end
@@ -548,8 +580,9 @@ class Objects
     begin
       # comments submitted in object json take the form of an array of pairs:
       # [[object/part_id, comment], [object/part_id, comment], ...]
-      comment_array = object[:json][:comments] || []
       comments = {}
+      return comments if object[:json].nil?
+      comment_array = object[:json][:comments] || []
       comment_array.each do |id, comment|
         comments[id] = [] if comments[id].nil?
         comments[id] += [comment]
