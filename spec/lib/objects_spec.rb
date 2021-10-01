@@ -499,6 +499,38 @@ describe 'creation of media objects' do
           expect(fields.keys.include? :creator).to be_truthy
           expect(fields[:creator]).to eq 'Unknown'
         end
+
+        context 'when mods is nested in a modscollection' do
+          it 'should have a bibliographic id if provided' do
+            #Use a fixture that has a catalog key
+            @object = Objects.new(posted_content: load_sample_obj(filename: 'GR00034889.coll.txt')).parse_request_body
+            fields = @media_object.get_fields_from_mods(@object)
+            expect(fields.keys.include? :bibliographic_id).to be_truthy
+            expect(fields[:bibliographic_id]).not_to be_nil
+          end
+          it 'should have mdpi_barcode(s) if provided' do
+            #Use a fixture that has a barcode
+            @object = Objects.new(posted_content: load_sample_obj(filename: 'GR00034889.coll.txt')).parse_request_body
+            fields = @media_object.get_fields_from_mods(@object)
+            expect(fields.keys.include? :other_identifier).to be_truthy
+            expect(fields[:other_identifier]).to include('40000000089906')
+            expect(fields[:other_identifier_type]).to include('mdpi barcode')
+          end
+          it 'should have a call number if provided' do
+            #Use a fixture that has a call number
+            @object = Objects.new(posted_content: load_sample_obj(filename: 'GR00034889.coll.txt')).parse_request_body
+            fields = @media_object.get_fields_from_mods(@object)
+            expect(fields[:other_identifier_type].include? 'other').to be_truthy
+            expect(fields[:other_identifier].size).to eq fields[:other_identifier_type].size
+          end
+          it 'should parse creator if provided' do
+            #Use a fixture that has a catalog key
+            @object = Objects.new(posted_content: load_sample_obj(filename: 'GR00034889.coll.txt')).parse_request_body
+            fields = @media_object.get_fields_from_mods(@object)
+            expect(fields.keys.include? :creator).to be_truthy
+            expect(fields[:creator]).to eq 'Indiana University Philharmonic Orchestra.'
+          end
+        end
       end
 
       describe 'routing an object and determining collection' do
