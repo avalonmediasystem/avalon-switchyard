@@ -499,13 +499,13 @@ class Objects
     mods = parse_mods(object)
 
     # Check for the default fields we need, we may only have these if a machine generated mods
-    fields[:title] = mods.xpath('/mods/titleInfo/title').text
+    fields[:title] = mods.xpath('//mods[1]/titleInfo/title').text
     fields[:title] = determine_call_number(object) || 'Untitled' if fields[:title] == ''
     fields[:creator] = get_creator(mods)
 
     # TODO: Stick me in a block
     begin
-      fields[:date_issued] = mods.xpath("/mods/originInfo/dateIssued[@encoding='marc']")[0].text
+      fields[:date_issued] = mods.xpath("//mods[1]/originInfo/dateIssued[@encoding='marc']")[0].text
       fields[:date_issued] = 'unknown/unknown' if fields[:date_issued] == '' || fields[:date_issued] == 'uuuu'
     rescue
       fields[:date_issued] = 'unknown/unknown'
@@ -553,7 +553,7 @@ class Objects
   # Gets the collection name for an object,
   def get_collection_name(object)
     begin
-      return parse_mods(object).xpath('/mods/identifier').text
+      return parse_mods(object).xpath('//mods[1]/identifier').text
     rescue
       object_error_and_exit(object, 'failed to determine target collection for object')
     end
@@ -598,7 +598,7 @@ class Objects
   # @param mods [Nokogiri::XML::Document]  the mods for the object
   # @return [Array] an array of all contributors
   def get_creator(mods)
-    name_nodes = mods.xpath('/mods/name')
+    name_nodes = mods.xpath('//mods[1]/name')
     contributors = []
     creators = []
     name_nodes.each do |name_node|
@@ -615,7 +615,7 @@ class Objects
   # @param [Hash] the object as passed to Switchyard
   # @return [String] the file format used for this file
   def get_file_format(object)
-    format = parse_mods(object).xpath('/mods/typeOfResource').text
+    format = parse_mods(object).xpath('//mods[1]/typeOfResource').text
     # Currently the two values for format in the mods are 'moving image' and 'sound recording'
     # Avalon wants these to be 'Moving image' and 'Sound'
     #change Moving Image to Moving image
@@ -688,7 +688,7 @@ class Objects
   # @return [String] returns the call number as a string
   # @return [Nil] returns nil if there is no call number
   def get_call_number_from_mods(object)
-    parse_mods(object).mods.xpath('/mods/identifier[@displayLabel = "Call Number"]').text
+    parse_mods(object).mods.xpath('//mods[1]/identifier[@displayLabel = "Call Number"]').text
   end
 
   # Given a barcode, return the format for that file
