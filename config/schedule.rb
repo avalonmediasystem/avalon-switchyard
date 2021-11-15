@@ -18,8 +18,10 @@
 # end
 
 # Learn more: http://github.com/javan/whenever
+set :environment_variable, "RACK_ENV"
+env "BUNDLE_APP_CONFIG", "/usr/local/bundle"
+env "GEM_HOME", "/usr/local/bundle"
 
 every 5.minute do
-  #command 'RACK_ENV=production bundle exec rake switchyard:send_item'
-  rake 'switchyard:send_batch RACK_ENV=production'
+  rake 'switchyard:send_batch'
 end
