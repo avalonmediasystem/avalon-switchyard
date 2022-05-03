@@ -499,6 +499,12 @@ describe 'creation of media objects' do
           expect(fields.keys.include? :creator).to be_truthy
           expect(fields[:creator]).to eq 'Unknown'
         end
+        it 'should parse to "unknown/unknown" if date_issued is invalid EDTF' do
+          @object = Objects.new(posted_content: load_sample_obj(filename: 'GR00063679.txt')).parse_request_body
+          fields = @media_object.get_fields_from_mods(@object)
+          expect(fields.keys.include? :date_issued).to be_truthy
+          expect(fields[:date_issued]).to eq 'unknown/unknown'
+        end
 
         context 'when mods is nested in a modscollection' do
           it 'should have a bibliographic id if provided' do

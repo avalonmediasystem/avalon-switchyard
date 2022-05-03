@@ -50,6 +50,8 @@ GEM
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
     dotenv (2.7.5)
+    edtf (3.0.8)
+      activesupport (>= 3.0, < 8.0)
     hashdiff (1.0.1)
     highline (2.0.3)
     http-accept (1.7.0)
@@ -174,6 +176,7 @@ DEPENDENCIES
   capybara
   coveralls
   dotenv
+  edtf
   highline
   mysql2
   nokogiri
@@ -191,4 +194,4 @@ DEPENDENCIES
   whenever
 
 BUNDLED WITH
-   2.0.2
+   2.3.6

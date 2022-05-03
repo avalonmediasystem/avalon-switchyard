@@ -17,6 +17,7 @@ source 'https://rubygems.org'
 
 # :default group gems
 gem 'dotenv'
+gem 'edtf'
 gem 'nokogiri'
 gem 'rake'
 gem 'rest-client'
