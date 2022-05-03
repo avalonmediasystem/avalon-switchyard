@@ -18,6 +18,7 @@ require 'retries'
 require 'nokogiri'
 require 'restclient'
 require 'date'
+require 'edtf'
 
 # Class for creating and working with media objects
 class Objects
@@ -506,7 +507,9 @@ class Objects
     # TODO: Stick me in a block
     begin
       fields[:date_issued] = mods.xpath("//mods[1]/originInfo/dateIssued[@encoding='marc']")[0].text
-      fields[:date_issued] = 'unknown/unknown' if fields[:date_issued] == '' || fields[:date_issued] == 'uuuu'
+      # Attempt EDTF parsing just like avalon will do to avoid 422 Unprocessable Entity errors due to non-compliant dates
+      edtf_date = Date.edtf(fields[:date_issued])
+      fields[:date_issued] = 'unknown/unknown' if edtf_date.nil? || edtf_date.class == EDTF::Unknown
     rescue
       fields[:date_issued] = 'unknown/unknown'
     end
