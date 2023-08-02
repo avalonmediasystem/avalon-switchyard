@@ -18,16 +18,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install Node 14
-      uses: actions/setup-node@v3
-      with:
-        node-version: 14
-        cache: 'yarn'
-    - name: Yarn install
-      run: yarn install --frozen-lockfile # optional, --immutable
-    - name: Yarn build
-      # Explicitly set CI to false to avoid elevating warnings to errors
-      run: CI=false yarn build
     - name: Build Image
       id: build_image
       uses: redhat-actions/buildah-build@v2
