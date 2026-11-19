@@ -46,6 +46,8 @@ configure do
   set :switchyard_configs, loader.load_yaml('switchyard.yml')
   Dir.mkdir('log') unless Dir.exist?('log')
   set :switchyard_log, Logger.new("log/#{ENV['RACK_ENV']}.log")
+
+  set :host_authorization, { permitted_hosts: [] }
 end
 
 helpers do
@@ -81,6 +83,7 @@ end
 post '/media_objects/create' do
   content_type :json
   protected!
+  request.body.rewind
   posted_content = request.body.read
   media_object = Objects.new(posted_content: posted_content)
   # Parse the request and throw a 400 code if bad data was posted in

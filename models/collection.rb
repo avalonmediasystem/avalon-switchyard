@@ -32,7 +32,7 @@ class Collection < ActiveRecord::Base
       # Request url/admin/collection/query_result[:pid].json
       # query_result[:pid] = response[:id] if response
       begin
-        avalon_collection_url = URI.escape("#{url}/admin/collections/#{query_result[:pid]}.json")
+        avalon_collection_url = Addressable::URI.escape("#{url}/admin/collections/#{query_result[:pid]}.json")
         Sinatra::Application.settings.switchyard_log.info "Checking for new collection id at #{avalon_collection_url}"
         routing_target = Router.new.select_avalon({})
         resp = RestClient::Request.execute(method: :get, url: avalon_collection_url, headers: {:content_type => :json, :accept => :json, :'Avalon-Api-Key' => routing_target[:api_token]}, verify_ssl: false, timeout: 45 * 60)
