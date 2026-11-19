@@ -107,6 +107,7 @@ GEM
       logger
       openssl (>= 3.2.0)
     netrc (0.11.0)
+    nio4r (2.7.5)
     nokogiri (1.19.7)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
@@ -121,6 +122,8 @@ GEM
     prettyprint (0.2.1)
     prism (2.1.0)
     public_suffix (7.0.5)
+    puma (8.1.2)
+      nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.2.8)
     rack-protection (4.2.2)
@@ -258,6 +261,7 @@ DEPENDENCIES
   highline
   mysql2
   nokogiri
+  puma
   rackup
   rake
   rb-readline
